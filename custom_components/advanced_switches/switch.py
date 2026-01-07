@@ -46,12 +46,19 @@ class ProxySwitch(SwitchEntity):
         self._entry = entry
         self._real_switch = controller.switch_entity
         self._attr_unique_id = f"{entry.entry_id}_power"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.data[CONF_DEVICE_NAME],
-            manufacturer="Advanced Switches",
-            model="Virtual Device",
-        )
+
+        # Link to source device if available, otherwise create virtual device
+        if controller.source_device_id:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, controller.source_device_id)},
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, entry.entry_id)},
+                name=entry.data[CONF_DEVICE_NAME],
+                manufacturer="Advanced Switches",
+                model="Virtual Device",
+            )
 
     @property
     def is_on(self) -> bool | None:

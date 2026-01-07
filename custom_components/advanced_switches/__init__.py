@@ -8,6 +8,7 @@ from typing import Any, Callable
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 
 from .const import (
@@ -118,6 +119,9 @@ class AdvancedSwitchController:
         self._energy_entity: str = entry.data[CONF_ENERGY_ENTITY]
         self._mode: str = entry.data[CONF_MODE]
 
+        # Get source device ID for device linking
+        self._source_device_id: str | None = self._get_source_device_id()
+
         # Schedule configuration
         self._schedule_enabled: bool = entry.data.get(
             CONF_SCHEDULE_ENABLED, DEFAULT_SCHEDULE_ENABLED
@@ -214,6 +218,24 @@ class AdvancedSwitchController:
             return time(int(parts[0]), int(parts[1]))
         except (ValueError, IndexError):
             return time(6, 0)
+
+    def _get_source_device_id(self) -> str | None:
+        """Get the device ID from the source switch entity."""
+        entity_registry = er.async_get(self.hass)
+        entity_entry = entity_registry.async_get(self._switch_entity)
+        if entity_entry and entity_entry.device_id:
+            _LOGGER.debug(
+                "%s: Linked to source device %s",
+                self._device_name,
+                entity_entry.device_id,
+            )
+            return entity_entry.device_id
+        return None
+
+    @property
+    def source_device_id(self) -> str | None:
+        """Return the source device ID for device linking."""
+        return self._source_device_id
 
     @property
     def device_name(self) -> str:

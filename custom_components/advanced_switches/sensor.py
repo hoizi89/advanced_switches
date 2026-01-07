@@ -72,12 +72,19 @@ class BaseEntity(SensorEntity):
         """Initialize the sensor."""
         self._ctrl = controller
         self._entry = entry
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.data[CONF_DEVICE_NAME],
-            manufacturer="Advanced Switches",
-            model="Virtual Device",
-        )
+
+        # Link to source device if available, otherwise create virtual device
+        if controller.source_device_id:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, controller.source_device_id)},
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, entry.entry_id)},
+                name=entry.data[CONF_DEVICE_NAME],
+                manufacturer="Advanced Switches",
+                model="Virtual Device",
+            )
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks when entity is added."""
