@@ -254,7 +254,6 @@ class LastSessionEnergySensor(BaseEntity):
     _attr_translation_key = "last_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:lightning-bolt"
 
     def __init__(
