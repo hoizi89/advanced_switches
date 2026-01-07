@@ -6,7 +6,7 @@ Home Assistant integration for smart plug session tracking with energy monitorin
 
 ## What it does
 
-Turns a smart plug (with power/energy sensors) into a smart device tracker:
+Turns any switch with power/energy sensors (smart plugs, Shelly relays, in-wall switches) into a smart device tracker:
 - Detects when device is running (active) or in standby
 - Counts sessions/cycles and tracks energy per session
 - Shows daily and total statistics
@@ -73,10 +73,12 @@ Outside allowed times: switch turns off and blocks.
 
 ### Auto-Off (Optional)
 
+Turns off the switch automatically X minutes after it was turned on.
+
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | Enable Auto-Off | off | Turn on auto-off |
-| Minutes | 60 | Turn off after X minutes |
+| Minutes | 60 | Turn off X minutes after switch turns on |
 
 ### Power Smoothing
 

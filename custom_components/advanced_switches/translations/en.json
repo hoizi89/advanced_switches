@@ -117,10 +117,13 @@
       },
       "auto_off": {
         "title": "Auto-Off Timer",
-        "description": "Automatically turn off after a certain time.",
+        "description": "Turns off the switch automatically X minutes after it was turned on.",
         "data": {
           "auto_off_enabled": "Enable Auto-Off",
           "auto_off_minutes": "Turn off after (minutes)"
+        },
+        "data_description": {
+          "auto_off_minutes": "Switch will be turned off X minutes after being turned on"
         }
       }
     }

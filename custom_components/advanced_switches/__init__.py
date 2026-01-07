@@ -646,6 +646,11 @@ class AdvancedSwitchController:
                 except ValueError:
                     pass
 
+        # Check if switch is already on (for auto-off timer)
+        switch_state = self.hass.states.get(self._switch_entity)
+        if switch_state and switch_state.state == "on":
+            self._start_auto_off_timer()
+
         # Register state change listener
         @callback
         def state_listener(event: Event) -> None:
@@ -717,6 +722,13 @@ class AdvancedSwitchController:
                 self._current_energy = float(new_state.state)
             except ValueError:
                 _LOGGER.debug("Invalid energy value: %s", new_state.state)
+
+        elif entity_id == self._switch_entity:
+            # Handle auto-off timer based on physical switch state
+            if new_state.state == "on":
+                self._start_auto_off_timer()
+            else:
+                self._cancel_auto_off_timer()
 
     async def _handle_power_change(self, power: float, initial: bool = False) -> None:
         """Handle power value changes."""
@@ -912,7 +924,6 @@ class AdvancedSwitchController:
 
         if old_state == STATE_OFF and new_state in (STATE_STANDBY, STATE_ACTIVE):
             self._start_session()
-            self._start_auto_off_timer()
 
         self._state = new_state
         _LOGGER.debug(

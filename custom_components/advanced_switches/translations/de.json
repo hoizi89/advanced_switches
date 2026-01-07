@@ -117,10 +117,13 @@
       },
       "auto_off": {
         "title": "Auto-Abschaltung",
-        "description": "Automatisch ausschalten nach einer bestimmten Zeit.",
+        "description": "Schaltet den Switch automatisch aus, X Minuten nachdem er eingeschaltet wurde.",
         "data": {
           "auto_off_enabled": "Auto-Abschaltung aktivieren",
-          "auto_off_minutes": "Zeit bis Abschaltung (Minuten)"
+          "auto_off_minutes": "Ausschalten nach (Minuten)"
+        },
+        "data_description": {
+          "auto_off_minutes": "Switch wird X Minuten nach dem Einschalten automatisch ausgeschaltet"
         }
       }
     }
