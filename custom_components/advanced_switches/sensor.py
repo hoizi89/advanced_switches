@@ -124,6 +124,31 @@ class StateSensor(BaseEntity):
         }
         return icons.get(self._ctrl.state, "mdi:help")
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return diagnostic attributes."""
+        attrs = {
+            "current_power_w": self._ctrl.current_power,
+            "mode": self._ctrl.mode,
+            "standby_threshold_w": self._ctrl._standby_threshold_w,
+            "active_threshold_w": self._ctrl._active_threshold_w,
+            "pending_session_end": self._ctrl._pending_session_end,
+        }
+
+        # Schedule info
+        if self._ctrl.schedule_enabled:
+            attrs["schedule_enabled"] = True
+            attrs["schedule_start"] = str(self._ctrl.schedule_start)
+            attrs["schedule_end"] = str(self._ctrl.schedule_end)
+            attrs["schedule_blocked"] = self._ctrl.schedule_blocked
+
+        # Auto-off info
+        if self._ctrl.auto_off_enabled:
+            attrs["auto_off_enabled"] = True
+            attrs["auto_off_minutes"] = self._ctrl.auto_off_minutes
+
+        return attrs
+
 
 class SessionsTotalSensor(RestoreSensor, BaseEntity):
     """Sensor showing total session count."""
