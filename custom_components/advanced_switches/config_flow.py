@@ -201,6 +201,18 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                             mode=selector.NumberSelectorMode.BOX,
                         )
                     ),
+                    vol.Required(
+                        CONF_POWER_SMOOTHING_S,
+                        default=DEFAULT_POWER_SMOOTHING_S,
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0,
+                            max=300,
+                            step=1,
+                            unit_of_measurement="s",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
                 }
             ),
         )
@@ -492,6 +504,18 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                             selector.NumberSelectorConfig(
                                 min=0,
                                 max=600,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_POWER_SMOOTHING_S,
+                            default=current.get(CONF_POWER_SMOOTHING_S, DEFAULT_POWER_SMOOTHING_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
                                 step=1,
                                 unit_of_measurement="s",
                                 mode=selector.NumberSelectorMode.BOX,

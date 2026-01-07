@@ -19,7 +19,11 @@
           "active_threshold_w": "Active Threshold (W)",
           "on_delay_s": "On Delay (s)",
           "off_delay_s": "Off Delay (s)",
-          "min_active_s": "Minimum Active Duration (s)"
+          "min_active_s": "Minimum Active Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
+        },
+        "data_description": {
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "standby_params": {
@@ -41,7 +45,7 @@
           "active_standby_delay_s": "Delay for ACTIVE ↔ STANDBY",
           "session_end_grace_s": "Delay for STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions shorter than this are ignored",
-          "power_smoothing_s": "Average over X seconds"
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "schedule": {
@@ -98,7 +102,7 @@
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions shorter than this ignored",
-          "power_smoothing_s": "Average over X seconds"
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "schedule": {

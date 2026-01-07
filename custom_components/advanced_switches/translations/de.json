@@ -19,7 +19,11 @@
           "active_threshold_w": "Aktiv-Schwellwert (W)",
           "on_delay_s": "Einschaltverzögerung (s)",
           "off_delay_s": "Ausschaltverzögerung (s)",
-          "min_active_s": "Mindest-Aktivdauer (s)"
+          "min_active_s": "Mindest-Aktivdauer (s)",
+          "power_smoothing_s": "Leistungsglättung (s)"
+        },
+        "data_description": {
+          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
         }
       },
       "standby_params": {
@@ -41,7 +45,7 @@
           "active_standby_delay_s": "Verzögerung für ACTIVE ↔ STANDBY",
           "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies werden ignoriert",
-          "power_smoothing_s": "Durchschnitt über X Sekunden"
+          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
         }
       },
       "schedule": {
@@ -98,7 +102,7 @@
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies ignorieren",
-          "power_smoothing_s": "Durchschnitt über X Sekunden"
+          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
         }
       },
       "schedule": {

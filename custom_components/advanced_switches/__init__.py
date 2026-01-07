@@ -149,6 +149,11 @@ class AdvancedSwitchController:
             CONF_AUTO_OFF_MINUTES, DEFAULT_AUTO_OFF_MINUTES
         )
 
+        # Power smoothing (both modes)
+        self._power_smoothing_s: int = entry.data.get(
+            CONF_POWER_SMOOTHING_S, DEFAULT_POWER_SMOOTHING_S
+        )
+
         # Load mode-specific parameters
         if self._mode == MODE_SIMPLE:
             self._active_threshold_w: float = entry.data.get(
@@ -176,9 +181,6 @@ class AdvancedSwitchController:
                 CONF_SESSION_END_GRACE_S, DEFAULT_SESSION_END_GRACE_S
             )
             self._min_duration_s: int = entry.data.get(CONF_MIN_SESSION_S, DEFAULT_MIN_SESSION_S)
-            self._power_smoothing_s: int = entry.data.get(
-                CONF_POWER_SMOOTHING_S, DEFAULT_POWER_SMOOTHING_S
-            )
 
         # Power smoothing - store (timestamp, power) tuples
         self._power_readings: deque[tuple[datetime, float]] = deque()
