@@ -6,7 +6,8 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
@@ -64,6 +65,12 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._data: dict[str, Any] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Get the options flow for this handler."""
+        return AdvancedSwitchesOptionsFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -329,4 +336,255 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=self._data[CONF_DEVICE_NAME],
             data=self._data,
+        )
+
+
+class AdvancedSwitchesOptionsFlow(OptionsFlow):
+    """Handle options flow for Advanced Switches."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options - show menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["thresholds", "timing", "schedule"],
+        )
+
+    async def async_step_thresholds(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle threshold options."""
+        if user_input is not None:
+            new_data = {**self._config_entry.data, **user_input}
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data
+        mode = current.get(CONF_MODE, MODE_SIMPLE)
+
+        if mode == MODE_SIMPLE:
+            return self.async_show_form(
+                step_id="thresholds",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_ACTIVE_THRESHOLD_W,
+                            default=current.get(CONF_ACTIVE_THRESHOLD_W, DEFAULT_ACTIVE_THRESHOLD_W),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=1,
+                                max=10000,
+                                step=1,
+                                unit_of_measurement="W",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                    }
+                ),
+            )
+        else:
+            return self.async_show_form(
+                step_id="thresholds",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_STANDBY_THRESHOLD_W,
+                            default=current.get(CONF_STANDBY_THRESHOLD_W, DEFAULT_STANDBY_THRESHOLD_W),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=1,
+                                max=1000,
+                                step=1,
+                                unit_of_measurement="W",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_ACTIVE_THRESHOLD_W,
+                            default=current.get(CONF_ACTIVE_THRESHOLD_W, DEFAULT_ACTIVE_THRESHOLD_W_STANDBY),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=1,
+                                max=10000,
+                                step=1,
+                                unit_of_measurement="W",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                    }
+                ),
+            )
+
+    async def async_step_timing(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle timing options."""
+        if user_input is not None:
+            new_data = {**self._config_entry.data, **user_input}
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data
+        mode = current.get(CONF_MODE, MODE_SIMPLE)
+
+        if mode == MODE_SIMPLE:
+            return self.async_show_form(
+                step_id="timing",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_ON_DELAY_S,
+                            default=current.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_OFF_DELAY_S,
+                            default=current.get(CONF_OFF_DELAY_S, DEFAULT_OFF_DELAY_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_MIN_ACTIVE_S,
+                            default=current.get(CONF_MIN_ACTIVE_S, DEFAULT_MIN_ACTIVE_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=600,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                    }
+                ),
+            )
+        else:
+            return self.async_show_form(
+                step_id="timing",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_ON_DELAY_S,
+                            default=current.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_OFF_DELAY_S,
+                            default=current.get(CONF_OFF_DELAY_S, DEFAULT_OFF_DELAY_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_SESSION_END_GRACE_S,
+                            default=current.get(CONF_SESSION_END_GRACE_S, DEFAULT_SESSION_END_GRACE_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=600,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_MIN_SESSION_S,
+                            default=current.get(CONF_MIN_SESSION_S, DEFAULT_MIN_SESSION_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=600,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                    }
+                ),
+            )
+
+    async def async_step_schedule(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle schedule options."""
+        if user_input is not None:
+            # Convert day strings back to integers
+            if CONF_SCHEDULE_DAYS in user_input:
+                user_input[CONF_SCHEDULE_DAYS] = [
+                    int(d) for d in user_input[CONF_SCHEDULE_DAYS]
+                ]
+            new_data = {**self._config_entry.data, **user_input}
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data
+        current_days = current.get(CONF_SCHEDULE_DAYS, DEFAULT_SCHEDULE_DAYS)
+
+        return self.async_show_form(
+            step_id="schedule",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCHEDULE_ENABLED,
+                        default=current.get(CONF_SCHEDULE_ENABLED, DEFAULT_SCHEDULE_ENABLED),
+                    ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_START,
+                        default=current.get(CONF_SCHEDULE_START, DEFAULT_SCHEDULE_START),
+                    ): selector.TimeSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_END,
+                        default=current.get(CONF_SCHEDULE_END, DEFAULT_SCHEDULE_END),
+                    ): selector.TimeSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_DAYS,
+                        default=[str(d) for d in current_days],
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(value=d["value"], label=d["label"])
+                                for d in WEEKDAYS
+                            ],
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                }
+            ),
         )

@@ -49,6 +49,48 @@
       "required": "Dieses Feld ist erforderlich"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Einstellungen",
+        "description": "Wählen Sie einen Bereich zum Bearbeiten.",
+        "menu_options": {
+          "thresholds": "Schwellwerte",
+          "timing": "Timing / Verzögerungen",
+          "schedule": "Zeitsteuerung"
+        }
+      },
+      "thresholds": {
+        "title": "Schwellwerte",
+        "description": "Anpassen der Leistungs-Schwellwerte für Zustandserkennung.",
+        "data": {
+          "standby_threshold_w": "Standby-Schwellwert (W)",
+          "active_threshold_w": "Aktiv-Schwellwert (W)"
+        }
+      },
+      "timing": {
+        "title": "Timing / Verzögerungen",
+        "description": "Anpassen der Verzögerungen und Mindestdauern.",
+        "data": {
+          "on_delay_s": "Einschaltverzögerung (s)",
+          "off_delay_s": "Ausschaltverzögerung (s)",
+          "min_active_s": "Mindest-Aktivdauer (s)",
+          "session_end_grace_s": "Session-Ende Toleranz (s)",
+          "min_session_s": "Mindest-Sessiondauer (s)"
+        }
+      },
+      "schedule": {
+        "title": "Zeitsteuerung",
+        "description": "Schalter nur zu bestimmten Zeiten erlauben.",
+        "data": {
+          "schedule_enabled": "Zeitsteuerung aktivieren",
+          "schedule_start": "Startzeit",
+          "schedule_end": "Endzeit",
+          "schedule_days": "Erlaubte Tage"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "state": {

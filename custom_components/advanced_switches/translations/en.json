@@ -49,6 +49,48 @@
       "required": "This field is required"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "description": "Select an area to edit.",
+        "menu_options": {
+          "thresholds": "Thresholds",
+          "timing": "Timing / Delays",
+          "schedule": "Schedule"
+        }
+      },
+      "thresholds": {
+        "title": "Thresholds",
+        "description": "Adjust power thresholds for state detection.",
+        "data": {
+          "standby_threshold_w": "Standby Threshold (W)",
+          "active_threshold_w": "Active Threshold (W)"
+        }
+      },
+      "timing": {
+        "title": "Timing / Delays",
+        "description": "Adjust delays and minimum durations.",
+        "data": {
+          "on_delay_s": "On Delay (s)",
+          "off_delay_s": "Off Delay (s)",
+          "min_active_s": "Minimum Active Duration (s)",
+          "session_end_grace_s": "Session End Grace Period (s)",
+          "min_session_s": "Minimum Session Duration (s)"
+        }
+      },
+      "schedule": {
+        "title": "Schedule",
+        "description": "Allow switch only at certain times.",
+        "data": {
+          "schedule_enabled": "Enable Schedule",
+          "schedule_start": "Start Time",
+          "schedule_end": "End Time",
+          "schedule_days": "Allowed Days"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "state": {
