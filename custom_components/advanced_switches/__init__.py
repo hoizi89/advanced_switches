@@ -725,15 +725,17 @@ class AdvancedSwitchController:
             if power < self._standby_threshold_w:
                 # Start grace timer (won't restart if already running)
                 self._start_off_timer(use_grace=True)
+                self._cancel_on_timer()  # Cancel any pending standby transition
             elif power < self._active_threshold_w:
-                # Drop to standby, but only cancel timer if not pending off
+                # Start timer to drop to standby (uses on_delay_s)
                 if not self._pending_session_end:
                     self._cancel_off_timer()
-                self._transition_to(STATE_STANDBY)
-            elif self._pending_session_end:
-                # Back to full active power - cancel pending off
-                self._cancel_off_timer()
-            # If power is still high and no pending off, do nothing
+                self._start_on_timer(STATE_STANDBY)
+            else:
+                # Power is high - cancel any pending transitions
+                if self._pending_session_end:
+                    self._cancel_off_timer()
+                self._cancel_on_timer()  # Cancel pending standby transition
 
     def _start_on_timer(self, target_state: str) -> None:
         """Start timer for state transition to on/active."""
