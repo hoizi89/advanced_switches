@@ -27,6 +27,7 @@ from .const import (
     ATTR_SESSIONS_TODAY,
     ATTR_SESSIONS_TOTAL,
     ATTR_TODAY_DATE,
+    CONF_ACTIVE_STANDBY_DELAY_S,
     CONF_ACTIVE_THRESHOLD_W,
     CONF_AUTO_OFF_ENABLED,
     CONF_AUTO_OFF_MINUTES,
@@ -45,6 +46,7 @@ from .const import (
     CONF_SESSION_END_GRACE_S,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
+    DEFAULT_ACTIVE_STANDBY_DELAY_S,
     DEFAULT_ACTIVE_THRESHOLD_W,
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
     DEFAULT_AUTO_OFF_ENABLED,
@@ -154,6 +156,7 @@ class AdvancedSwitchController:
             self._min_duration_s: int = entry.data.get(CONF_MIN_ACTIVE_S, DEFAULT_MIN_ACTIVE_S)
             self._standby_threshold_w: float = 0
             self._session_end_grace_s: int = self._off_delay_s
+            self._active_standby_delay_s: int = self._on_delay_s  # Not used in simple mode
         else:  # Standby mode
             self._standby_threshold_w: float = entry.data.get(
                 CONF_STANDBY_THRESHOLD_W, DEFAULT_STANDBY_THRESHOLD_W
@@ -163,6 +166,9 @@ class AdvancedSwitchController:
             )
             self._on_delay_s: int = entry.data.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S)
             self._off_delay_s: int = entry.data.get(CONF_OFF_DELAY_S, DEFAULT_OFF_DELAY_S)
+            self._active_standby_delay_s: int = entry.data.get(
+                CONF_ACTIVE_STANDBY_DELAY_S, DEFAULT_ACTIVE_STANDBY_DELAY_S
+            )
             self._session_end_grace_s: int = entry.data.get(
                 CONF_SESSION_END_GRACE_S, DEFAULT_SESSION_END_GRACE_S
             )
@@ -737,14 +743,20 @@ class AdvancedSwitchController:
                     self._cancel_off_timer()
                 self._cancel_on_timer()  # Cancel pending standby transition
 
-    def _start_on_timer(self, target_state: str) -> None:
-        """Start timer for state transition to on/active."""
+    def _start_on_timer(self, target_state: str, delay: int | None = None) -> None:
+        """Start timer for state transition."""
         if self._pending_on_timer is not None:
             if self._pending_target_state == target_state:
                 return
             self._cancel_on_timer()
 
         self._pending_target_state = target_state
+        # Use active_standby_delay for ACTIVE↔STANDBY, on_delay for others
+        if delay is None:
+            if self._state in (STATE_ACTIVE, STATE_STANDBY) and target_state in (STATE_ACTIVE, STATE_STANDBY):
+                delay = self._active_standby_delay_s
+            else:
+                delay = self._on_delay_s
 
         @callback
         def on_timer_callback(_: datetime) -> None:
@@ -753,9 +765,7 @@ class AdvancedSwitchController:
             self._pending_target_state = None
             self._transition_to(target_state)
 
-        self._pending_on_timer = async_call_later(
-            self.hass, self._on_delay_s, on_timer_callback
-        )
+        self._pending_on_timer = async_call_later(self.hass, delay, on_timer_callback)
 
     def _cancel_on_timer(self) -> None:
         """Cancel pending on timer."""

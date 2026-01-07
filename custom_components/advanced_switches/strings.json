@@ -29,8 +29,17 @@
           "standby_threshold_w": "Standby-Schwellwert (W)",
           "active_threshold_w": "Aktiv-Schwellwert (W)",
           "on_delay_s": "Einschaltverzögerung (s)",
+          "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)"
+        },
+        "data_description": {
+          "standby_threshold_w": "OFF → STANDBY wenn Power darüber",
+          "active_threshold_w": "STANDBY → ACTIVE wenn Power darüber",
+          "on_delay_s": "Verzögerung für OFF → STANDBY/ACTIVE",
+          "active_standby_delay_s": "Verzögerung für ACTIVE ↔ STANDBY",
+          "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
+          "min_session_s": "Sessions kürzer als dies werden ignoriert"
         }
       },
       "schedule": {
@@ -75,8 +84,17 @@
           "on_delay_s": "Einschaltverzögerung (s)",
           "off_delay_s": "Ausschaltverzögerung (s)",
           "min_active_s": "Mindest-Aktivdauer (s)",
+          "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)"
+        },
+        "data_description": {
+          "on_delay_s": "OFF → STANDBY/ACTIVE",
+          "off_delay_s": "ACTIVE → OFF (Simple Mode)",
+          "min_active_s": "Zyklen kürzer als dies ignorieren",
+          "active_standby_delay_s": "ACTIVE ↔ STANDBY",
+          "session_end_grace_s": "STANDBY/ACTIVE → OFF",
+          "min_session_s": "Sessions kürzer als dies ignorieren"
         }
       },
       "schedule": {

@@ -11,6 +11,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
+    CONF_ACTIVE_STANDBY_DELAY_S,
     CONF_ACTIVE_THRESHOLD_W,
     CONF_AUTO_OFF_ENABLED,
     CONF_AUTO_OFF_MINUTES,
@@ -29,6 +30,7 @@ from .const import (
     CONF_SESSION_END_GRACE_S,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
+    DEFAULT_ACTIVE_STANDBY_DELAY_S,
     DEFAULT_ACTIVE_THRESHOLD_W,
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
     DEFAULT_AUTO_OFF_ENABLED,
@@ -240,6 +242,18 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(
                         CONF_ON_DELAY_S,
                         default=DEFAULT_ON_DELAY_S,
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0,
+                            max=300,
+                            step=1,
+                            unit_of_measurement="s",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_ACTIVE_STANDBY_DELAY_S,
+                        default=DEFAULT_ACTIVE_STANDBY_DELAY_S,
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             min=0,
@@ -480,6 +494,18 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                         vol.Required(
                             CONF_ON_DELAY_S,
                             default=current.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_ACTIVE_STANDBY_DELAY_S,
+                            default=current.get(CONF_ACTIVE_STANDBY_DELAY_S, DEFAULT_ACTIVE_STANDBY_DELAY_S),
                         ): selector.NumberSelector(
                             selector.NumberSelectorConfig(
                                 min=0,
