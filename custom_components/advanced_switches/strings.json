@@ -57,7 +57,8 @@
         "menu_options": {
           "thresholds": "Schwellwerte",
           "timing": "Timing / Verzögerungen",
-          "schedule": "Zeitsteuerung"
+          "schedule": "Zeitsteuerung",
+          "auto_off": "Auto-Abschaltung"
         }
       },
       "thresholds": {
@@ -88,6 +89,14 @@
           "schedule_end": "Endzeit",
           "schedule_days": "Erlaubte Tage"
         }
+      },
+      "auto_off": {
+        "title": "Auto-Abschaltung",
+        "description": "Automatisch ausschalten nach einer bestimmten Zeit.",
+        "data": {
+          "auto_off_enabled": "Auto-Abschaltung aktivieren",
+          "auto_off_minutes": "Zeit bis Abschaltung (Minuten)"
+        }
       }
     }
   },
@@ -108,8 +117,26 @@
       "last_session_energy": {
         "name": "Letzte Session Energie"
       },
+      "last_session_peak_power": {
+        "name": "Letzte Session Peak"
+      },
       "energy_today": {
         "name": "Energie heute"
+      },
+      "current_session_duration": {
+        "name": "Aktuelle Session Dauer"
+      },
+      "current_session_energy": {
+        "name": "Aktuelle Session Energie"
+      },
+      "current_session_peak_power": {
+        "name": "Aktuelle Session Peak"
+      },
+      "avg_session_duration": {
+        "name": "Ø Session Dauer"
+      },
+      "avg_session_energy": {
+        "name": "Ø Session Energie"
       }
     },
     "switch": {

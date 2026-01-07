@@ -32,6 +32,10 @@ CONF_SCHEDULE_START = "schedule_start"
 CONF_SCHEDULE_END = "schedule_end"
 CONF_SCHEDULE_DAYS = "schedule_days"
 
+# Auto-off timer
+CONF_AUTO_OFF_ENABLED = "auto_off_enabled"
+CONF_AUTO_OFF_MINUTES = "auto_off_minutes"
+
 # Defaults - Simple mode
 DEFAULT_ACTIVE_THRESHOLD_W = 50
 DEFAULT_ON_DELAY_S = 3
@@ -50,6 +54,13 @@ DEFAULT_SCHEDULE_START = "06:00"
 DEFAULT_SCHEDULE_END = "22:00"
 DEFAULT_SCHEDULE_DAYS = [0, 1, 2, 3, 4, 5, 6]  # All days (Mon=0, Sun=6)
 
+# Defaults - Auto-off timer
+DEFAULT_AUTO_OFF_ENABLED = False
+DEFAULT_AUTO_OFF_MINUTES = 60
+
+# Session history
+SESSION_HISTORY_SIZE = 10
+
 # States
 STATE_OFF = "off"
 STATE_STANDBY = "standby"
@@ -62,7 +73,12 @@ ATTR_SESSIONS_TODAY = "sessions_today"
 ATTR_ENERGY_TODAY_KWH = "energy_today_kwh"
 ATTR_LAST_SESSION_DURATION_S = "last_session_duration_s"
 ATTR_LAST_SESSION_ENERGY_KWH = "last_session_energy_kwh"
+ATTR_LAST_SESSION_PEAK_POWER_W = "last_session_peak_power_w"
 ATTR_TODAY_DATE = "today_date"
 ATTR_SESSION_ACTIVE = "session_active"
 ATTR_SESSION_START_TIME = "session_start_time"
 ATTR_SESSION_START_ENERGY = "session_start_energy"
+ATTR_SESSION_PEAK_POWER = "session_peak_power"
+ATTR_SESSION_HISTORY = "session_history"
+ATTR_AVG_SESSION_DURATION_S = "avg_session_duration_s"
+ATTR_AVG_SESSION_ENERGY_KWH = "avg_session_energy_kwh"

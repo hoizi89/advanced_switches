@@ -12,6 +12,8 @@ from homeassistant.helpers import selector
 
 from .const import (
     CONF_ACTIVE_THRESHOLD_W,
+    CONF_AUTO_OFF_ENABLED,
+    CONF_AUTO_OFF_MINUTES,
     CONF_DEVICE_NAME,
     CONF_ENERGY_ENTITY,
     CONF_MIN_ACTIVE_S,
@@ -29,6 +31,8 @@ from .const import (
     CONF_SWITCH_ENTITY,
     DEFAULT_ACTIVE_THRESHOLD_W,
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
+    DEFAULT_AUTO_OFF_ENABLED,
+    DEFAULT_AUTO_OFF_MINUTES,
     DEFAULT_MIN_ACTIVE_S,
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
@@ -352,7 +356,7 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
         """Manage the options - show menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["thresholds", "timing", "schedule"],
+            menu_options=["thresholds", "timing", "schedule", "auto_off"],
         )
 
     async def async_step_thresholds(
@@ -583,6 +587,43 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                             ],
                             multiple=True,
                             mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_auto_off(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle auto-off timer options."""
+        if user_input is not None:
+            new_data = {**self._config_entry.data, **user_input}
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data
+
+        return self.async_show_form(
+            step_id="auto_off",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_AUTO_OFF_ENABLED,
+                        default=current.get(CONF_AUTO_OFF_ENABLED, DEFAULT_AUTO_OFF_ENABLED),
+                    ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_AUTO_OFF_MINUTES,
+                        default=current.get(CONF_AUTO_OFF_MINUTES, DEFAULT_AUTO_OFF_MINUTES),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1,
+                            max=1440,
+                            step=1,
+                            unit_of_measurement="min",
+                            mode=selector.NumberSelectorMode.BOX,
                         )
                     ),
                 }

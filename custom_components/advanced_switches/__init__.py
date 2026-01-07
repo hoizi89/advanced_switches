@@ -11,16 +11,23 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 
 from .const import (
+    ATTR_AVG_SESSION_DURATION_S,
+    ATTR_AVG_SESSION_ENERGY_KWH,
     ATTR_ENERGY_TODAY_KWH,
     ATTR_LAST_SESSION_DURATION_S,
     ATTR_LAST_SESSION_ENERGY_KWH,
+    ATTR_LAST_SESSION_PEAK_POWER_W,
     ATTR_SESSION_ACTIVE,
+    ATTR_SESSION_HISTORY,
+    ATTR_SESSION_PEAK_POWER,
     ATTR_SESSION_START_ENERGY,
     ATTR_SESSION_START_TIME,
     ATTR_SESSIONS_TODAY,
     ATTR_SESSIONS_TOTAL,
     ATTR_TODAY_DATE,
     CONF_ACTIVE_THRESHOLD_W,
+    CONF_AUTO_OFF_ENABLED,
+    CONF_AUTO_OFF_MINUTES,
     CONF_DEVICE_NAME,
     CONF_ENERGY_ENTITY,
     CONF_MIN_ACTIVE_S,
@@ -38,6 +45,8 @@ from .const import (
     CONF_SWITCH_ENTITY,
     DEFAULT_ACTIVE_THRESHOLD_W,
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
+    DEFAULT_AUTO_OFF_ENABLED,
+    DEFAULT_AUTO_OFF_MINUTES,
     DEFAULT_MIN_ACTIVE_S,
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
@@ -52,6 +61,7 @@ from .const import (
     MODE_SIMPLE,
     MODE_STANDBY,
     PLATFORMS,
+    SESSION_HISTORY_SIZE,
     STATE_ACTIVE,
     STATE_BLOCKED,
     STATE_OFF,
@@ -121,6 +131,14 @@ class AdvancedSwitchController:
             CONF_SCHEDULE_DAYS, DEFAULT_SCHEDULE_DAYS
         )
 
+        # Auto-off timer configuration
+        self._auto_off_enabled: bool = entry.data.get(
+            CONF_AUTO_OFF_ENABLED, DEFAULT_AUTO_OFF_ENABLED
+        )
+        self._auto_off_minutes: int = entry.data.get(
+            CONF_AUTO_OFF_MINUTES, DEFAULT_AUTO_OFF_MINUTES
+        )
+
         # Load mode-specific parameters
         if self._mode == MODE_SIMPLE:
             self._active_threshold_w: float = entry.data.get(
@@ -150,14 +168,19 @@ class AdvancedSwitchController:
         self._session_start_time: datetime | None = None
         self._session_start_energy: float | None = None
         self._current_energy: float | None = None
+        self._current_power: float = 0.0
         self._power_available: bool = True
         self._energy_available: bool = True
         self._schedule_blocked: bool = False
+
+        # Session tracking - Peak power
+        self._session_peak_power: float = 0.0
 
         # Timers
         self._pending_on_timer: Any | None = None
         self._pending_off_timer: Any | None = None
         self._pending_target_state: str | None = None
+        self._auto_off_timer: Any | None = None
 
         # Persistent statistics
         self._sessions_total: int = 0
@@ -165,8 +188,16 @@ class AdvancedSwitchController:
         self._energy_today_kwh: float = 0.0
         self._last_session_duration_s: int | None = None
         self._last_session_energy_kwh: float | None = None
+        self._last_session_peak_power_w: float | None = None
         self._today_date: date = date.today()
         self._state_restored: bool = False
+
+        # Session history (last N sessions)
+        self._session_history: list[dict[str, Any]] = []
+
+        # Average values (calculated from history)
+        self._avg_session_duration_s: float | None = None
+        self._avg_session_energy_kwh: float | None = None
 
         # Entity update listeners
         self._entity_listeners: list[Callable[[], None]] = []
@@ -229,6 +260,50 @@ class AdvancedSwitchController:
         return self._last_session_energy_kwh
 
     @property
+    def last_session_peak_power_w(self) -> float | None:
+        """Return last session peak power."""
+        return self._last_session_peak_power_w
+
+    @property
+    def current_power(self) -> float:
+        """Return current power."""
+        return self._current_power
+
+    @property
+    def session_peak_power(self) -> float:
+        """Return current session peak power."""
+        return self._session_peak_power
+
+    @property
+    def current_session_duration_s(self) -> int | None:
+        """Return current session duration in seconds."""
+        if self._session_start_time is None:
+            return None
+        return int((datetime.now() - self._session_start_time).total_seconds())
+
+    @property
+    def current_session_energy_kwh(self) -> float | None:
+        """Return current session energy consumption."""
+        if self._session_start_energy is None or self._current_energy is None:
+            return None
+        return max(0.0, self._current_energy - self._session_start_energy)
+
+    @property
+    def session_history(self) -> list[dict[str, Any]]:
+        """Return session history."""
+        return self._session_history
+
+    @property
+    def avg_session_duration_s(self) -> float | None:
+        """Return average session duration."""
+        return self._avg_session_duration_s
+
+    @property
+    def avg_session_energy_kwh(self) -> float | None:
+        """Return average session energy."""
+        return self._avg_session_energy_kwh
+
+    @property
     def schedule_enabled(self) -> bool:
         """Return if schedule is enabled."""
         return self._schedule_enabled
@@ -252,6 +327,16 @@ class AdvancedSwitchController:
     def schedule_days(self) -> list[int]:
         """Return schedule days."""
         return self._schedule_days
+
+    @property
+    def auto_off_enabled(self) -> bool:
+        """Return if auto-off is enabled."""
+        return self._auto_off_enabled
+
+    @property
+    def auto_off_minutes(self) -> int:
+        """Return auto-off timeout in minutes."""
+        return self._auto_off_minutes
 
     def _is_within_schedule(self) -> bool:
         """Check if current time is within the allowed schedule."""
@@ -327,12 +412,25 @@ class AdvancedSwitchController:
             self._last_session_duration_s = int(data[ATTR_LAST_SESSION_DURATION_S])
         if data.get(ATTR_LAST_SESSION_ENERGY_KWH) is not None:
             self._last_session_energy_kwh = float(data[ATTR_LAST_SESSION_ENERGY_KWH])
+        if data.get(ATTR_LAST_SESSION_PEAK_POWER_W) is not None:
+            self._last_session_peak_power_w = float(data[ATTR_LAST_SESSION_PEAK_POWER_W])
 
         if data.get(ATTR_TODAY_DATE):
             try:
                 self._today_date = date.fromisoformat(data[ATTR_TODAY_DATE])
             except (ValueError, TypeError):
                 self._today_date = date.today()
+
+        # Restore session history
+        if data.get(ATTR_SESSION_HISTORY):
+            self._session_history = data[ATTR_SESSION_HISTORY][:SESSION_HISTORY_SIZE]
+            self._calculate_averages()
+
+        # Restore average values
+        if data.get(ATTR_AVG_SESSION_DURATION_S) is not None:
+            self._avg_session_duration_s = float(data[ATTR_AVG_SESSION_DURATION_S])
+        if data.get(ATTR_AVG_SESSION_ENERGY_KWH) is not None:
+            self._avg_session_energy_kwh = float(data[ATTR_AVG_SESSION_ENERGY_KWH])
 
         if data.get(ATTR_SESSION_ACTIVE):
             if data.get(ATTR_SESSION_START_TIME):
@@ -345,6 +443,9 @@ class AdvancedSwitchController:
 
             if data.get(ATTR_SESSION_START_ENERGY) is not None:
                 self._session_start_energy = float(data[ATTR_SESSION_START_ENERGY])
+
+            if data.get(ATTR_SESSION_PEAK_POWER) is not None:
+                self._session_peak_power = float(data[ATTR_SESSION_PEAK_POWER])
 
             _LOGGER.debug(
                 "Restored active session for %s, started at %s",
@@ -369,12 +470,17 @@ class AdvancedSwitchController:
             ATTR_ENERGY_TODAY_KWH: round(self._energy_today_kwh, 3),
             ATTR_LAST_SESSION_DURATION_S: self._last_session_duration_s,
             ATTR_LAST_SESSION_ENERGY_KWH: self._last_session_energy_kwh,
+            ATTR_LAST_SESSION_PEAK_POWER_W: self._last_session_peak_power_w,
             ATTR_TODAY_DATE: self._today_date.isoformat(),
             ATTR_SESSION_ACTIVE: self._state != STATE_OFF,
             ATTR_SESSION_START_TIME: (
                 self._session_start_time.isoformat() if self._session_start_time else None
             ),
             ATTR_SESSION_START_ENERGY: self._session_start_energy,
+            ATTR_SESSION_PEAK_POWER: self._session_peak_power,
+            ATTR_SESSION_HISTORY: self._session_history,
+            ATTR_AVG_SESSION_DURATION_S: self._avg_session_duration_s,
+            ATTR_AVG_SESSION_ENERGY_KWH: self._avg_session_energy_kwh,
         }
 
     async def async_start(self) -> None:
@@ -398,6 +504,7 @@ class AdvancedSwitchController:
             if power_state and power_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
                 try:
                     power = float(power_state.state)
+                    self._current_power = power
                     await self._handle_power_change(power, initial=True)
                 except ValueError:
                     pass
@@ -431,6 +538,7 @@ class AdvancedSwitchController:
         """Stop the controller."""
         self._cancel_on_timer()
         self._cancel_off_timer()
+        self._cancel_auto_off_timer()
 
         for remove_listener in self._remove_listeners:
             remove_listener()
@@ -454,6 +562,10 @@ class AdvancedSwitchController:
             self._power_available = True
             try:
                 power = float(new_state.state)
+                self._current_power = power
+                # Track peak power during session
+                if self._state != STATE_OFF and power > self._session_peak_power:
+                    self._session_peak_power = power
                 await self._handle_power_change(power)
             except ValueError:
                 _LOGGER.debug("Invalid power value: %s", new_state.state)
@@ -577,6 +689,47 @@ class AdvancedSwitchController:
             self._pending_off_timer()
             self._pending_off_timer = None
 
+    def _start_auto_off_timer(self) -> None:
+        """Start auto-off timer."""
+        if not self._auto_off_enabled or self._auto_off_timer is not None:
+            return
+
+        @callback
+        def auto_off_callback(_: datetime) -> None:
+            """Handle auto-off timer expiration."""
+            self._auto_off_timer = None
+            _LOGGER.info(
+                "%s: Auto-off timer expired after %d minutes, turning off",
+                self._device_name,
+                self._auto_off_minutes,
+            )
+            self.hass.async_create_task(self._auto_turn_off())
+
+        self._auto_off_timer = async_call_later(
+            self.hass, self._auto_off_minutes * 60, auto_off_callback
+        )
+        _LOGGER.debug(
+            "%s: Auto-off timer started for %d minutes",
+            self._device_name,
+            self._auto_off_minutes,
+        )
+
+    def _cancel_auto_off_timer(self) -> None:
+        """Cancel auto-off timer."""
+        if self._auto_off_timer is not None:
+            self._auto_off_timer()
+            self._auto_off_timer = None
+
+    async def _auto_turn_off(self) -> None:
+        """Turn off switch due to auto-off timer."""
+        await self.hass.services.async_call(
+            "switch",
+            "turn_off",
+            {"entity_id": self._switch_entity},
+            blocking=True,
+        )
+        self._end_session()
+
     def _transition_to(self, new_state: str) -> None:
         """Transition to a new state."""
         old_state = self._state
@@ -586,6 +739,7 @@ class AdvancedSwitchController:
 
         if old_state == STATE_OFF and new_state in (STATE_STANDBY, STATE_ACTIVE):
             self._start_session()
+            self._start_auto_off_timer()
 
         self._state = new_state
         _LOGGER.debug(
@@ -600,6 +754,7 @@ class AdvancedSwitchController:
         """Start a new session."""
         self._session_start_time = datetime.now()
         self._session_start_energy = self._current_energy
+        self._session_peak_power = self._current_power
         _LOGGER.debug(
             "%s: Session started at %s with energy %.3f kWh",
             self._device_name,
@@ -609,6 +764,8 @@ class AdvancedSwitchController:
 
     def _end_session(self) -> None:
         """End the current session."""
+        self._cancel_auto_off_timer()
+
         if self._session_start_time is None:
             self._state = STATE_OFF
             self._notify_entities()
@@ -638,20 +795,52 @@ class AdvancedSwitchController:
         self._energy_today_kwh += energy_kwh
         self._last_session_duration_s = int(duration_s)
         self._last_session_energy_kwh = round(energy_kwh, 3)
+        self._last_session_peak_power_w = round(self._session_peak_power, 1)
+
+        # Add to session history
+        session_record = {
+            "start": self._session_start_time.isoformat(),
+            "end": now.isoformat(),
+            "duration_s": self._last_session_duration_s,
+            "energy_kwh": self._last_session_energy_kwh,
+            "peak_power_w": self._last_session_peak_power_w,
+        }
+        self._session_history.insert(0, session_record)
+        # Keep only last N sessions
+        self._session_history = self._session_history[:SESSION_HISTORY_SIZE]
+
+        # Recalculate averages
+        self._calculate_averages()
 
         _LOGGER.info(
-            "%s: Session ended - duration: %ds, energy: %.3f kWh",
+            "%s: Session ended - duration: %ds, energy: %.3f kWh, peak: %.1f W",
             self._device_name,
             self._last_session_duration_s,
             self._last_session_energy_kwh,
+            self._last_session_peak_power_w,
         )
 
         self._reset_session()
+
+    def _calculate_averages(self) -> None:
+        """Calculate average session values from history."""
+        if not self._session_history:
+            self._avg_session_duration_s = None
+            self._avg_session_energy_kwh = None
+            return
+
+        total_duration = sum(s.get("duration_s", 0) for s in self._session_history)
+        total_energy = sum(s.get("energy_kwh", 0) for s in self._session_history)
+        count = len(self._session_history)
+
+        self._avg_session_duration_s = round(total_duration / count, 1)
+        self._avg_session_energy_kwh = round(total_energy / count, 3)
 
     def _reset_session(self) -> None:
         """Reset session state."""
         self._session_start_time = None
         self._session_start_energy = None
+        self._session_peak_power = 0.0
         self._state = STATE_OFF
         self._notify_entities()
 

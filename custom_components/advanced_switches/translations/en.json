@@ -57,7 +57,8 @@
         "menu_options": {
           "thresholds": "Thresholds",
           "timing": "Timing / Delays",
-          "schedule": "Schedule"
+          "schedule": "Schedule",
+          "auto_off": "Auto-Off Timer"
         }
       },
       "thresholds": {
@@ -88,6 +89,14 @@
           "schedule_end": "End Time",
           "schedule_days": "Allowed Days"
         }
+      },
+      "auto_off": {
+        "title": "Auto-Off Timer",
+        "description": "Automatically turn off after a certain time.",
+        "data": {
+          "auto_off_enabled": "Enable Auto-Off",
+          "auto_off_minutes": "Turn off after (minutes)"
+        }
       }
     }
   },
@@ -108,8 +117,26 @@
       "last_session_energy": {
         "name": "Last Session Energy"
       },
+      "last_session_peak_power": {
+        "name": "Last Session Peak Power"
+      },
       "energy_today": {
         "name": "Energy Today"
+      },
+      "current_session_duration": {
+        "name": "Current Session Duration"
+      },
+      "current_session_energy": {
+        "name": "Current Session Energy"
+      },
+      "current_session_peak_power": {
+        "name": "Current Session Peak Power"
+      },
+      "avg_session_duration": {
+        "name": "Avg Session Duration"
+      },
+      "avg_session_energy": {
+        "name": "Avg Session Energy"
       }
     },
     "switch": {

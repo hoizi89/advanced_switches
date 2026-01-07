@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy, UnitOfTime
+from homeassistant.const import EntityCategory, UnitOfEnergy, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -43,7 +43,15 @@ async def async_setup_entry(
         SessionsTodaySensor(controller, entry),
         LastSessionDurationSensor(controller, entry),
         LastSessionEnergySensor(controller, entry),
+        LastSessionPeakPowerSensor(controller, entry),
         EnergyTodaySensor(controller, entry),
+        # Live session sensors
+        CurrentSessionDurationSensor(controller, entry),
+        CurrentSessionEnergySensor(controller, entry),
+        CurrentSessionPeakPowerSensor(controller, entry),
+        # Average sensors
+        AvgSessionDurationSensor(controller, entry),
+        AvgSessionEnergySensor(controller, entry),
     ]
 
     async_add_entities(entities)
@@ -221,6 +229,29 @@ class LastSessionEnergySensor(BaseEntity):
         return self._ctrl.last_session_energy_kwh
 
 
+class LastSessionPeakPowerSensor(BaseEntity):
+    """Sensor showing last session peak power."""
+
+    _attr_translation_key = "last_session_peak_power"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_icon = "mdi:flash-triangle"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_last_session_peak_power"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the last session peak power."""
+        return self._ctrl.last_session_peak_power_w
+
+
 class EnergyTodaySensor(BaseEntity):
     """Sensor showing today's energy consumption."""
 
@@ -243,3 +274,147 @@ class EnergyTodaySensor(BaseEntity):
     def native_value(self) -> float:
         """Return today's energy consumption."""
         return round(self._ctrl.energy_today_kwh, 3)
+
+
+# Live session sensors
+
+class CurrentSessionDurationSensor(BaseEntity):
+    """Sensor showing current session duration (live)."""
+
+    _attr_translation_key = "current_session_duration"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_icon = "mdi:timer-play"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_current_session_duration"
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the current session duration in seconds."""
+        return self._ctrl.current_session_duration_s
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+
+
+class CurrentSessionEnergySensor(BaseEntity):
+    """Sensor showing current session energy consumption (live)."""
+
+    _attr_translation_key = "current_session_energy"
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_icon = "mdi:lightning-bolt-circle"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_current_session_energy"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current session energy consumption."""
+        value = self._ctrl.current_session_energy_kwh
+        return round(value, 3) if value is not None else None
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+
+
+class CurrentSessionPeakPowerSensor(BaseEntity):
+    """Sensor showing current session peak power (live)."""
+
+    _attr_translation_key = "current_session_peak_power"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_icon = "mdi:flash-triangle-outline"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_current_session_peak_power"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current session peak power."""
+        if self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE):
+            return round(self._ctrl.session_peak_power, 1)
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+
+
+# Average sensors
+
+class AvgSessionDurationSensor(BaseEntity):
+    """Sensor showing average session duration."""
+
+    _attr_translation_key = "avg_session_duration"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_icon = "mdi:timer-sand"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_avg_session_duration"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the average session duration."""
+        return self._ctrl.avg_session_duration_s
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return session history as attributes."""
+        return {"session_history": self._ctrl.session_history}
+
+
+class AvgSessionEnergySensor(BaseEntity):
+    """Sensor showing average session energy consumption."""
+
+    _attr_translation_key = "avg_session_energy"
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_icon = "mdi:chart-line"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_avg_session_energy"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the average session energy consumption."""
+        return self._ctrl.avg_session_energy_kwh
