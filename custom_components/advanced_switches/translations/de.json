@@ -147,11 +147,6 @@
         "name": "Ø Session Energie"
       }
     },
-    "switch": {
-      "power": {
-        "name": "Schalter"
-      }
-    },
     "binary_sensor": {
       "active": {
         "name": "Aktiv"

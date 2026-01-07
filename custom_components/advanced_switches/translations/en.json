@@ -147,11 +147,6 @@
         "name": "Avg Session Energy"
       }
     },
-    "switch": {
-      "power": {
-        "name": "Power"
-      }
-    },
     "binary_sensor": {
       "active": {
         "name": "Active"
