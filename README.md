@@ -1,227 +1,142 @@
 # Advanced Switches
 
-Home Assistant integration for creating virtual devices from smart plugs with energy monitoring, session tracking, and scheduling.
+Home Assistant integration for smart plug session tracking with energy monitoring and scheduling.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 
-## Features
+## What it does
 
-- **Session/Cycle Tracking**: Automatically detects start and end of operating cycles
-- **Energy per Session**: Calculates energy consumption per session/cycle
-- **Daily and Total Statistics**: Sessions and energy today/total
-- **Two Operating Modes**:
-  - **Simple Mode**: OFF/ACTIVE (e.g., air compressor, pump)
-  - **Standby Mode**: OFF/STANDBY/ACTIVE (e.g., sauna, washing machine, dryer)
-- **Power Smoothing**: Moving average for noisy power sensors (optional)
-- **Schedule Control**: Allow devices only at certain times (e.g., compressor only during daytime)
-- **Auto-Off Timer**: Automatically turn off after a set duration
-- **Multiple Instances**: Unlimited devices in parallel
+Turns a smart plug (with power/energy sensors) into a smart device tracker:
+- Detects when device is running (active) or in standby
+- Counts sessions/cycles and tracks energy per session
+- Shows daily and total statistics
+- Optional: Only allow operation at certain times (schedule)
+- Optional: Auto-off after X minutes
+
+**Use cases:** Washing machine, dryer, sauna, air compressor, pump, etc.
 
 ## Requirements
 
 A smart plug with:
-- Switch Entity (for on/off control)
-- Power Sensor (Watt)
-- Energy Sensor (kWh, total_increasing)
+- Switch entity
+- Power sensor (W)
+- Energy sensor (kWh)
 
 ## Installation
 
-### HACS (Recommended)
+**HACS:** Search for "Advanced Switches" → Install → Restart HA
 
-1. Open HACS
-2. Click "Integrations"
-3. Search for "Advanced Switches"
-4. Install the integration
-5. Restart Home Assistant
+**Manual:** Copy `custom_components/advanced_switches` to your config folder → Restart HA
 
-### Manual
+## Setup
 
-1. Copy `custom_components/advanced_switches` to your `config/custom_components/` directory
-2. Restart Home Assistant
+Settings → Devices & Services → Add Integration → "Advanced Switches"
 
-## Configuration
+Choose operating mode:
+- **Simple Mode** - Two states: OFF / ACTIVE (e.g., compressor, pump)
+- **Standby Mode** - Three states: OFF / STANDBY / ACTIVE (e.g., washing machine, sauna)
 
-1. Settings → Devices & Services → Add Integration
-2. Search for "Advanced Switches"
-3. Configure the device:
-   - **Name**: e.g., "Sauna", "Compressor", "Washing Machine"
-   - **Switch/Power/Energy Entities**: Select from your entities
-   - **Mode**: Simple or Standby
-   - **Schedule**: Optionally enable time-based control
+## Parameters
 
-### Simple Mode (Compressor, Pump, etc.)
+### Simple Mode
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `active_threshold_w` | 50 | Power >= X = active |
-| `on_delay_s` | 3 | Delay for OFF→ACTIVE |
-| `off_delay_s` | 5 | Delay for ACTIVE→OFF |
-| `min_active_s` | 10 | Minimum duration to count as cycle |
-| `power_smoothing_s` | 0 | Moving average window (0 = disabled) |
+| Active Threshold (W) | 50 | Power above = active |
+| On Delay (s) | 3 | Wait before OFF → ACTIVE |
+| Off Delay (s) | 5 | Wait before ACTIVE → OFF |
+| Min Active Duration (s) | 10 | Shorter cycles are ignored |
+| Power Smoothing (s) | 0 | Moving average (0 = off) |
 
-### Standby Mode (Sauna, Washing Machine, etc.)
+### Standby Mode
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `standby_threshold_w` | 5 | Power >= X = standby |
-| `active_threshold_w` | 1000 | Power >= X = active |
-| `on_delay_s` | 3 | Delay for state changes |
-| `active_standby_delay_s` | 5 | Delay for ACTIVE↔STANDBY |
-| `session_end_grace_s` | 120 | Grace period to prevent false session ends |
-| `min_session_s` | 60 | Minimum duration to count as session |
-| `power_smoothing_s` | 0 | Moving average window (0 = disabled) |
+| Standby Threshold (W) | 5 | Power above = standby |
+| Active Threshold (W) | 1000 | Power above = active |
+| On Delay (s) | 3 | Wait before state changes |
+| Active/Standby Delay (s) | 5 | Wait for ACTIVE ↔ STANDBY |
+| Session End Grace (s) | 120 | Prevents false session ends |
+| Min Session Duration (s) | 60 | Shorter sessions are ignored |
+| Power Smoothing (s) | 0 | Moving average (0 = off) |
+
+### Schedule (Optional)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Enable Schedule | off | Turn on scheduling |
+| Start Time | 06:00 | Allowed from |
+| End Time | 22:00 | Allowed until |
+| Days | Mon-Sun | Allowed days |
+
+Outside allowed times: switch turns off and blocks.
+
+### Auto-Off (Optional)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Enable Auto-Off | off | Turn on auto-off |
+| Minutes | 60 | Turn off after X minutes |
 
 ### Power Smoothing
 
-For devices with noisy power sensors (e.g., washing machines fluctuating between 0.3W and 3W in standby), enable power smoothing:
-
-- Set `power_smoothing_s` to the averaging window in seconds (e.g., 30-60)
-- The smoothed power value is used for state detection
-- Peak power tracking still uses raw values
-- A diagnostic sensor shows the smoothed power value
-
-### Schedule Control (Optional)
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `schedule_enabled` | false | Enable scheduling |
-| `schedule_start` | 06:00 | Start time (allowed from) |
-| `schedule_end` | 22:00 | End time (allowed until) |
-| `schedule_days` | Mon-Sun | Allowed weekdays |
-
-**Example: Compressor only during daytime:**
-- `schedule_enabled`: true
-- `schedule_start`: 07:00
-- `schedule_end`: 20:00
-- `schedule_days`: Mon-Fri
-
-Outside allowed times:
-- Switch is automatically turned off
-- Turning on is blocked
-- State shows "blocked"
-
-### Auto-Off Timer (Optional)
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `auto_off_enabled` | false | Enable auto-off |
-| `auto_off_minutes` | 60 | Turn off after X minutes |
-
-Useful for devices that should not run indefinitely.
+For noisy sensors (e.g., washing machine fluctuating 0.3-3W in standby):
+- Set Power Smoothing to 30-60 seconds
+- Smoothed value is used for state detection
+- Peak power still uses raw values
 
 ## Created Entities
 
-| Entity | Description |
-|--------|-------------|
-| `sensor.<name>_state` | off/standby/active/blocked |
-| `binary_sensor.<name>_active` | True when active |
-| `binary_sensor.<name>_on` | True when standby/active (Standby Mode only) |
-| `binary_sensor.<name>_schedule_blocked` | True when blocked by schedule |
-| `binary_sensor.<name>_schedule_turned_off` | True when turned off by schedule |
-| `sensor.<name>_sessions_total` | Total session counter |
-| `sensor.<name>_sessions_today` | Sessions today |
-| `sensor.<name>_last_session_duration` | Last session duration |
-| `sensor.<name>_last_session_energy` | Last session energy (kWh) |
-| `sensor.<name>_last_session_peak_power` | Last session peak power (W) |
-| `sensor.<name>_energy_today` | Energy today (kWh) |
-| `sensor.<name>_energy_total` | Total energy (kWh) |
-| `sensor.<name>_current_session_duration` | Current session duration |
-| `sensor.<name>_current_session_energy` | Current session energy (kWh) |
-| `sensor.<name>_current_session_peak_power` | Current session peak power (W) |
-| `sensor.<name>_avg_session_duration` | Average session duration |
-| `sensor.<name>_avg_session_energy` | Average session energy (kWh) |
-| `sensor.<name>_auto_off_at` | Auto-off timestamp (if enabled) |
-| `sensor.<name>_smoothed_power` | Smoothed power (diagnostic) |
+**Main:**
+- `sensor.<name>_state` - off / standby / active / blocked
+- `binary_sensor.<name>_active` - true when active
+- `binary_sensor.<name>_on` - true when on (standby or active)
 
-## Example Configurations
+**Statistics:**
+- `sensor.<name>_sessions_total` - total count
+- `sensor.<name>_sessions_today` - today's count
+- `sensor.<name>_energy_today` - kWh today
+- `sensor.<name>_energy_total` - kWh total
 
-### Sauna (Standby Mode)
-```yaml
-standby_threshold_w: 5
-active_threshold_w: 1000
-session_end_grace_s: 120   # Ignore heating cycles
-min_session_s: 60
-```
+**Last Session:**
+- `sensor.<name>_last_session_duration`
+- `sensor.<name>_last_session_energy`
+- `sensor.<name>_last_session_peak_power`
 
-### Washing Machine (Standby Mode)
-```yaml
-standby_threshold_w: 1
-active_threshold_w: 10
-session_end_grace_s: 300   # 5 min for pause phases
-min_session_s: 60
-power_smoothing_s: 30      # Smooth noisy readings
-```
+**Current Session:**
+- `sensor.<name>_current_session_duration`
+- `sensor.<name>_current_session_energy`
+- `sensor.<name>_current_session_peak_power`
 
-### Compressor with Night Mode (Simple Mode)
-```yaml
-active_threshold_w: 50
-on_delay_s: 3
-off_delay_s: 5
-min_active_s: 10
-schedule_enabled: true
-schedule_start: "07:00"
-schedule_end: "20:00"
-```
+**Averages:**
+- `sensor.<name>_avg_session_duration`
+- `sensor.<name>_avg_session_energy`
 
-## Notifications
+**Schedule:**
+- `binary_sensor.<name>_schedule_blocked`
+- `binary_sensor.<name>_schedule_turned_off`
 
-The integration does not create notifications. For "Washing machine finished" etc., create an automation:
+**Other:**
+- `sensor.<name>_auto_off_at` - when auto-off triggers
+- `sensor.<name>_smoothed_power` - diagnostic
 
-```yaml
-trigger:
-  - platform: state
-    entity_id: sensor.washing_machine_state
-    from: "active"
-    to: "standby"
-action:
-  - service: notify.mobile_app
-    data:
-      title: "Washing Machine Finished!"
-      message: "Please collect your laundry"
-```
+## Example Configs
 
-## State Machine
+**Washing Machine:**
+- Standby Threshold: 1W
+- Active Threshold: 10W
+- Session End Grace: 300s (pause phases)
+- Power Smoothing: 30s
 
-### Simple Mode
-```
-    ┌───────┐  power >= threshold  ┌────────┐
-    │  OFF  │ ──────────────────► │ ACTIVE │
-    └───────┘  for on_delay_s      └────────┘
-        ▲                              │
-        │  power < threshold           │
-        │  for off_delay_s             │
-        └──────────────────────────────┘
+**Sauna:**
+- Standby Threshold: 5W
+- Active Threshold: 1000W
+- Session End Grace: 120s (heating cycles)
 
-Cycle = OFF → ACTIVE → OFF (if duration >= min_active_s)
-```
-
-### Standby Mode
-```
-                      power >= active_threshold
-                ┌─────────────────────────────────┐
-                │                                 │
-                ▼                                 │
-            ┌────────┐                        ┌───────┐
-            │ ACTIVE │ ◄──────────────────────│  OFF  │
-            └────────┘   power >= standby      └───────┘
-                │                                  ▲
-                │ power < active                   │
-                │ (but >= standby)                 │
-                ▼                                  │
-            ┌─────────┐                            │
-            │ STANDBY │                            │
-            └─────────┘                            │
-                │                                  │
-                │ power < standby_threshold        │
-                │ for session_end_grace_s          │
-                └──────────────────────────────────┘
-
-Session = OFF → (STANDBY|ACTIVE) → ... → OFF
-  - ACTIVE↔STANDBY transitions do NOT end session
-  - Session ends only when power < standby for grace period
-  - Only counted if duration >= min_session_s
-```
+**Compressor (daytime only):**
+- Active Threshold: 50W
+- Schedule: 07:00-20:00, Mon-Fri
 
 ## License
 
-MIT License
+MIT
