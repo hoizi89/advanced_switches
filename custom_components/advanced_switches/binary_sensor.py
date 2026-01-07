@@ -8,6 +8,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -87,6 +88,7 @@ class ActiveBinarySensor(BaseBinarySensor):
 
     _attr_translation_key = "active"
     _attr_device_class = BinarySensorDeviceClass.RUNNING
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -108,6 +110,7 @@ class OnBinarySensor(BaseBinarySensor):
 
     _attr_translation_key = "on"
     _attr_device_class = BinarySensorDeviceClass.POWER
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -129,6 +132,7 @@ class ScheduleBlockedSensor(BaseBinarySensor):
 
     _attr_translation_key = "schedule_blocked"
     _attr_device_class = BinarySensorDeviceClass.LOCK
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
