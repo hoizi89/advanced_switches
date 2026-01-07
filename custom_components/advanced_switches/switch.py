@@ -48,9 +48,10 @@ class ProxySwitch(SwitchEntity):
         self._attr_unique_id = f"{entry.entry_id}_power"
 
         # Link to source device if available, otherwise create virtual device
-        if controller.source_device_id:
+        source_identifiers = controller.get_source_device_identifiers()
+        if source_identifiers:
             self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, controller.source_device_id)},
+                identifiers=source_identifiers,
             )
         else:
             self._attr_device_info = DeviceInfo(

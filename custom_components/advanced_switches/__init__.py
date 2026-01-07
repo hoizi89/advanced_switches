@@ -232,6 +232,21 @@ class AdvancedSwitchController:
             return entity_entry.device_id
         return None
 
+    def get_source_device_identifiers(self) -> set[tuple[str, str]] | None:
+        """Get the identifiers from the source device."""
+        if not self._source_device_id:
+            return None
+        device_registry = dr.async_get(self.hass)
+        device = device_registry.async_get(self._source_device_id)
+        if device and device.identifiers:
+            _LOGGER.debug(
+                "%s: Using source device identifiers %s",
+                self._device_name,
+                device.identifiers,
+            )
+            return device.identifiers
+        return None
+
     @property
     def source_device_id(self) -> str | None:
         """Return the source device ID for device linking."""
