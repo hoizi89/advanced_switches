@@ -177,6 +177,7 @@ class AdvancedSwitchController:
         self._power_available: bool = True
         self._energy_available: bool = True
         self._schedule_blocked: bool = False
+        self._was_on_before_schedule_off: bool = False  # Remember state for schedule restore
 
         # Session tracking - Peak power
         self._session_peak_power: float = 0.0
@@ -374,6 +375,11 @@ class AdvancedSwitchController:
         return self._schedule_days
 
     @property
+    def schedule_turned_off(self) -> bool:
+        """Return True if device was turned off by schedule (and will be restored)."""
+        return self._schedule_blocked and self._was_on_before_schedule_off
+
+    @property
     def auto_off_enabled(self) -> bool:
         """Return if auto-off is enabled."""
         return self._auto_off_enabled
@@ -405,34 +411,60 @@ class AdvancedSwitchController:
             return current_time >= self._schedule_start or current_time <= self._schedule_end
 
     async def _enforce_schedule(self) -> None:
-        """Enforce the schedule by turning off switch if outside allowed time."""
+        """Enforce the schedule by turning off/on switch based on time."""
         was_blocked = self._schedule_blocked
         self._schedule_blocked = not self._is_within_schedule()
 
         if self._schedule_blocked and not was_blocked:
-            # Just entered blocked period
-            _LOGGER.info(
-                "%s: Outside schedule, turning off",
-                self._device_name,
-            )
-            # Turn off the real switch
-            await self.hass.services.async_call(
-                "switch",
-                "turn_off",
-                {"entity_id": self._switch_entity},
-                blocking=True,
-            )
-            # End any active session
-            if self._state != STATE_OFF:
-                self._end_session()
+            # Just entered blocked period - check if switch is currently ON
+            switch_state = self.hass.states.get(self._switch_entity)
+            switch_is_on = switch_state and switch_state.state == "on"
+
+            if switch_is_on:
+                # Switch was ON, turn it off and remember
+                self._was_on_before_schedule_off = True
+                _LOGGER.info(
+                    "%s: Schedule end reached, turning off (will restore later)",
+                    self._device_name,
+                )
+                await self.hass.services.async_call(
+                    "switch",
+                    "turn_off",
+                    {"entity_id": self._switch_entity},
+                    blocking=True,
+                )
+                # End any active session
+                if self._state != STATE_OFF:
+                    self._end_session()
+            else:
+                # Switch was OFF, don't remember
+                self._was_on_before_schedule_off = False
+                _LOGGER.debug(
+                    "%s: Schedule end reached, switch already off",
+                    self._device_name,
+                )
             self._notify_entities()
 
         elif not self._schedule_blocked and was_blocked:
             # Just entered allowed period
-            _LOGGER.info(
-                "%s: Within schedule, switch enabled",
-                self._device_name,
-            )
+            if self._was_on_before_schedule_off:
+                # Was on before, turn it back on
+                _LOGGER.info(
+                    "%s: Schedule start reached, restoring switch to ON",
+                    self._device_name,
+                )
+                await self.hass.services.async_call(
+                    "switch",
+                    "turn_on",
+                    {"entity_id": self._switch_entity},
+                    blocking=True,
+                )
+                self._was_on_before_schedule_off = False
+            else:
+                _LOGGER.debug(
+                    "%s: Schedule start reached, switch stays off",
+                    self._device_name,
+                )
             self._notify_entities()
 
     def register_entity_listener(self, callback_fn: Callable[[], None]) -> None:

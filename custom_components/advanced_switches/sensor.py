@@ -152,6 +152,7 @@ class StateSensor(BaseEntity):
             attrs["schedule_start"] = str(self._ctrl.schedule_start)
             attrs["schedule_end"] = str(self._ctrl.schedule_end)
             attrs["schedule_blocked"] = self._ctrl.schedule_blocked
+            attrs["schedule_turned_off"] = self._ctrl.schedule_turned_off
 
         # Auto-off info
         if self._ctrl.auto_off_enabled:
