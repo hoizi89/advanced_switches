@@ -14,6 +14,7 @@ from .const import (
     ATTR_AVG_SESSION_DURATION_S,
     ATTR_AVG_SESSION_ENERGY_KWH,
     ATTR_ENERGY_TODAY_KWH,
+    ATTR_ENERGY_TOTAL_KWH,
     ATTR_LAST_SESSION_DURATION_S,
     ATTR_LAST_SESSION_ENERGY_KWH,
     ATTR_LAST_SESSION_PEAK_POWER_W,
@@ -187,6 +188,7 @@ class AdvancedSwitchController:
         self._sessions_total: int = 0
         self._sessions_today: int = 0
         self._energy_today_kwh: float = 0.0
+        self._energy_total_kwh: float = 0.0
         self._last_session_duration_s: int | None = None
         self._last_session_energy_kwh: float | None = None
         self._last_session_peak_power_w: float | None = None
@@ -249,6 +251,11 @@ class AdvancedSwitchController:
     def energy_today_kwh(self) -> float:
         """Return today's energy consumption."""
         return self._energy_today_kwh
+
+    @property
+    def energy_total_kwh(self) -> float:
+        """Return total energy consumption."""
+        return self._energy_total_kwh
 
     @property
     def last_session_duration_s(self) -> int | None:
@@ -408,6 +415,7 @@ class AdvancedSwitchController:
         self._sessions_total = int(data.get(ATTR_SESSIONS_TOTAL, 0))
         self._sessions_today = int(data.get(ATTR_SESSIONS_TODAY, 0))
         self._energy_today_kwh = float(data.get(ATTR_ENERGY_TODAY_KWH, 0.0))
+        self._energy_total_kwh = float(data.get(ATTR_ENERGY_TOTAL_KWH, 0.0))
 
         if data.get(ATTR_LAST_SESSION_DURATION_S) is not None:
             self._last_session_duration_s = int(data[ATTR_LAST_SESSION_DURATION_S])
@@ -469,6 +477,7 @@ class AdvancedSwitchController:
             ATTR_SESSIONS_TOTAL: self._sessions_total,
             ATTR_SESSIONS_TODAY: self._sessions_today,
             ATTR_ENERGY_TODAY_KWH: round(self._energy_today_kwh, 3),
+            ATTR_ENERGY_TOTAL_KWH: round(self._energy_total_kwh, 3),
             ATTR_LAST_SESSION_DURATION_S: self._last_session_duration_s,
             ATTR_LAST_SESSION_ENERGY_KWH: self._last_session_energy_kwh,
             ATTR_LAST_SESSION_PEAK_POWER_W: self._last_session_peak_power_w,
@@ -812,6 +821,7 @@ class AdvancedSwitchController:
         self._sessions_total += 1
         self._sessions_today += 1
         self._energy_today_kwh += energy_kwh
+        self._energy_total_kwh += energy_kwh
         self._last_session_duration_s = int(duration_s)
         self._last_session_energy_kwh = round(energy_kwh, 3)
         self._last_session_peak_power_w = round(self._session_peak_power, 1)

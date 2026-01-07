@@ -45,11 +45,12 @@ async def async_setup_entry(
         LastSessionEnergySensor(controller, entry),
         LastSessionPeakPowerSensor(controller, entry),
         EnergyTodaySensor(controller, entry),
-        # Live session sensors
+        EnergyTotalSensor(controller, entry),
+        # Live session sensors (diagnostic)
         CurrentSessionDurationSensor(controller, entry),
         CurrentSessionEnergySensor(controller, entry),
         CurrentSessionPeakPowerSensor(controller, entry),
-        # Average sensors
+        # Average sensors (diagnostic)
         AvgSessionDurationSensor(controller, entry),
         AvgSessionEnergySensor(controller, entry),
     ]
@@ -303,6 +304,30 @@ class EnergyTodaySensor(BaseEntity):
         return round(self._ctrl.energy_today_kwh, 3)
 
 
+class EnergyTotalSensor(BaseEntity):
+    """Sensor showing total energy consumption."""
+
+    _attr_translation_key = "energy_total"
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_icon = "mdi:lightning-bolt"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_energy_total"
+
+    @property
+    def native_value(self) -> float:
+        """Return total energy consumption."""
+        return round(self._ctrl.energy_total_kwh, 3)
+
+
 # Live session sensors
 
 class CurrentSessionDurationSensor(BaseEntity):
@@ -312,6 +337,7 @@ class CurrentSessionDurationSensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_icon = "mdi:timer-play"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -340,6 +366,7 @@ class CurrentSessionEnergySensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_icon = "mdi:lightning-bolt-circle"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -369,6 +396,7 @@ class CurrentSessionPeakPowerSensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_icon = "mdi:flash-triangle-outline"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
