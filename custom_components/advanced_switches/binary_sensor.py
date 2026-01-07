@@ -39,9 +39,10 @@ async def async_setup_entry(
     if controller.mode == MODE_STANDBY:
         entities.append(OnBinarySensor(controller, entry))
 
-    # Add schedule blocked sensor if schedule is enabled
+    # Add schedule sensors if schedule is enabled
     if controller.schedule_enabled:
         entities.append(ScheduleBlockedSensor(controller, entry))
+        entities.append(ScheduleTurnedOffSensor(controller, entry))
 
     async_add_entities(entities)
 
@@ -155,3 +156,25 @@ class ScheduleBlockedSensor(BaseBinarySensor):
     def is_on(self) -> bool:
         """Return true if device is blocked by schedule."""
         return self._ctrl.schedule_blocked
+
+
+class ScheduleTurnedOffSensor(BaseBinarySensor):
+    """Binary sensor showing if device was turned off by schedule."""
+
+    _attr_translation_key = "schedule_turned_off"
+    _attr_device_class = BinarySensorDeviceClass.POWER
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_schedule_turned_off"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if device was turned off by schedule (will restore later)."""
+        return self._ctrl.schedule_turned_off

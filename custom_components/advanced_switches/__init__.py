@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Any, Callable
 
 from homeassistant.config_entries import ConfigEntry
@@ -187,6 +187,7 @@ class AdvancedSwitchController:
         self._pending_off_timer: Any | None = None
         self._pending_target_state: str | None = None
         self._auto_off_timer: Any | None = None
+        self._auto_off_at: datetime | None = None  # When auto-off will trigger
         self._pending_session_end: bool = False  # Ignore fluctuations during grace period
 
         # Persistent statistics
@@ -388,6 +389,11 @@ class AdvancedSwitchController:
     def auto_off_minutes(self) -> int:
         """Return auto-off timeout in minutes."""
         return self._auto_off_minutes
+
+    @property
+    def auto_off_at(self) -> datetime | None:
+        """Return when auto-off will trigger."""
+        return self._auto_off_at
 
     def _is_within_schedule(self) -> bool:
         """Check if current time is within the allowed schedule."""
@@ -791,10 +797,14 @@ class AdvancedSwitchController:
         if not self._auto_off_enabled or self._auto_off_timer is not None:
             return
 
+        # Calculate when auto-off will trigger
+        self._auto_off_at = datetime.now() + timedelta(minutes=self._auto_off_minutes)
+
         @callback
         def auto_off_callback(_: datetime) -> None:
             """Handle auto-off timer expiration."""
             self._auto_off_timer = None
+            self._auto_off_at = None
             _LOGGER.info(
                 "%s: Auto-off timer expired after %d minutes, turning off",
                 self._device_name,
@@ -806,16 +816,20 @@ class AdvancedSwitchController:
             self.hass, self._auto_off_minutes * 60, auto_off_callback
         )
         _LOGGER.debug(
-            "%s: Auto-off timer started for %d minutes",
+            "%s: Auto-off timer started for %d minutes (at %s)",
             self._device_name,
             self._auto_off_minutes,
+            self._auto_off_at,
         )
+        self._notify_entities()
 
     def _cancel_auto_off_timer(self) -> None:
         """Cancel auto-off timer."""
         if self._auto_off_timer is not None:
             self._auto_off_timer()
             self._auto_off_timer = None
+            self._auto_off_at = None
+            self._notify_entities()
 
     async def _auto_turn_off(self) -> None:
         """Turn off switch due to auto-off timer."""

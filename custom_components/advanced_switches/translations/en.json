@@ -145,6 +145,9 @@
       },
       "avg_session_energy": {
         "name": "Avg Session Energy"
+      },
+      "auto_off_at": {
+        "name": "Auto Off At"
       }
     },
     "binary_sensor": {
@@ -156,6 +159,9 @@
       },
       "schedule_blocked": {
         "name": "Schedule Blocked"
+      },
+      "schedule_turned_off": {
+        "name": "Turned Off By Schedule"
       }
     }
   }

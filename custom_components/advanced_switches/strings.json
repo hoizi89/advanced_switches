@@ -145,6 +145,9 @@
       },
       "avg_session_energy": {
         "name": "Ø Session Energie"
+      },
+      "auto_off_at": {
+        "name": "Auto-Aus um"
       }
     },
     "binary_sensor": {
@@ -156,6 +159,9 @@
       },
       "schedule_blocked": {
         "name": "Zeitsperre aktiv"
+      },
+      "schedule_turned_off": {
+        "name": "Wegen Zeitsperre aus"
       }
     }
   }

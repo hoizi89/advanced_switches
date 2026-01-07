@@ -55,6 +55,10 @@ async def async_setup_entry(
         AvgSessionEnergySensor(controller, entry),
     ]
 
+    # Add auto-off timestamp sensor if auto-off is enabled
+    if controller.auto_off_enabled:
+        entities.append(AutoOffAtSensor(controller, entry))
+
     async_add_entities(entities)
 
 
@@ -482,3 +486,26 @@ class AvgSessionEnergySensor(BaseEntity):
     def native_value(self) -> float | None:
         """Return the average session energy consumption."""
         return self._ctrl.avg_session_energy_kwh
+
+
+class AutoOffAtSensor(BaseEntity):
+    """Sensor showing when auto-off will trigger."""
+
+    _attr_translation_key = "auto_off_at"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:timer-off"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_auto_off_at"
+
+    @property
+    def native_value(self):
+        """Return when auto-off will trigger."""
+        return self._ctrl.auto_off_at
