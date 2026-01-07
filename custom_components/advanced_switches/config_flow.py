@@ -220,9 +220,9 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                         default=DEFAULT_STANDBY_THRESHOLD_W,
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
-                            min=1,
+                            min=0.1,
                             max=1000,
-                            step=1,
+                            step=0.1,
                             unit_of_measurement="W",
                             mode=selector.NumberSelectorMode.BOX,
                         )
@@ -405,9 +405,9 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                             default=current.get(CONF_STANDBY_THRESHOLD_W, DEFAULT_STANDBY_THRESHOLD_W),
                         ): selector.NumberSelector(
                             selector.NumberSelectorConfig(
-                                min=1,
+                                min=0.1,
                                 max=1000,
-                                step=1,
+                                step=0.1,
                                 unit_of_measurement="W",
                                 mode=selector.NumberSelectorMode.BOX,
                             )
