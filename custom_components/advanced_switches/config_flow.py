@@ -250,18 +250,6 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                         )
                     ),
                     vol.Required(
-                        CONF_OFF_DELAY_S,
-                        default=DEFAULT_OFF_DELAY_S,
-                    ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=0,
-                            max=300,
-                            step=1,
-                            unit_of_measurement="s",
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
-                    vol.Required(
                         CONF_SESSION_END_GRACE_S,
                         default=DEFAULT_SESSION_END_GRACE_S,
                     ): selector.NumberSelector(
@@ -492,18 +480,6 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                         vol.Required(
                             CONF_ON_DELAY_S,
                             default=current.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S),
-                        ): selector.NumberSelector(
-                            selector.NumberSelectorConfig(
-                                min=0,
-                                max=300,
-                                step=1,
-                                unit_of_measurement="s",
-                                mode=selector.NumberSelectorMode.BOX,
-                            )
-                        ),
-                        vol.Required(
-                            CONF_OFF_DELAY_S,
-                            default=current.get(CONF_OFF_DELAY_S, DEFAULT_OFF_DELAY_S),
                         ): selector.NumberSelector(
                             selector.NumberSelectorConfig(
                                 min=0,

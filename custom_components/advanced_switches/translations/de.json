@@ -29,7 +29,6 @@
           "standby_threshold_w": "Standby-Schwellwert (W)",
           "active_threshold_w": "Aktiv-Schwellwert (W)",
           "on_delay_s": "Einschaltverzögerung (s)",
-          "off_delay_s": "Ausschaltverzögerung (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)"
         }

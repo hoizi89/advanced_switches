@@ -29,7 +29,6 @@
           "standby_threshold_w": "Standby Threshold (W)",
           "active_threshold_w": "Active Threshold (W)",
           "on_delay_s": "On Delay (s)",
-          "off_delay_s": "Off Delay (s)",
           "session_end_grace_s": "Session End Grace Period (s)",
           "min_session_s": "Minimum Session Duration (s)"
         }
