@@ -2,125 +2,125 @@
   "config": {
     "step": {
       "user": {
-        "title": "Gerät hinzufügen",
-        "description": "Konfigurieren Sie ein Advanced Switches Gerät.",
+        "title": "Add Device",
+        "description": "Configure an Advanced Switches device.",
         "data": {
-          "device_name": "Gerätename",
-          "switch_entity": "Switch Entity (Steckdose)",
+          "device_name": "Device Name",
+          "switch_entity": "Switch Entity",
           "power_entity": "Power Entity (Watt)",
           "energy_entity": "Energy Entity (kWh)",
-          "mode": "Betriebsmodus"
+          "mode": "Operating Mode"
         }
       },
       "simple_params": {
-        "title": "Simple Mode Parameter",
-        "description": "Konfigurieren Sie die Parameter für den Simple Mode (OFF/ACTIVE).",
+        "title": "Simple Mode Parameters",
+        "description": "Configure parameters for Simple Mode (OFF/ACTIVE).",
         "data": {
-          "active_threshold_w": "Aktiv-Schwellwert (W)",
-          "on_delay_s": "Einschaltverzögerung (s)",
-          "off_delay_s": "Ausschaltverzögerung (s)",
-          "min_active_s": "Mindest-Aktivdauer (s)",
-          "power_smoothing_s": "Leistungsglättung (s)"
+          "active_threshold_w": "Active Threshold (W)",
+          "on_delay_s": "On Delay (s)",
+          "off_delay_s": "Off Delay (s)",
+          "min_active_s": "Minimum Active Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
         },
         "data_description": {
-          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "standby_params": {
-        "title": "Standby Mode Parameter",
-        "description": "Konfigurieren Sie die Parameter für den Standby Mode (OFF/STANDBY/ACTIVE).",
+        "title": "Standby Mode Parameters",
+        "description": "Configure parameters for Standby Mode (OFF/STANDBY/ACTIVE).",
         "data": {
-          "standby_threshold_w": "Standby-Schwellwert (W)",
-          "active_threshold_w": "Aktiv-Schwellwert (W)",
-          "on_delay_s": "Einschaltverzögerung (s)",
-          "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
-          "session_end_grace_s": "Session-Ende Toleranz (s)",
-          "min_session_s": "Mindest-Sessiondauer (s)",
-          "power_smoothing_s": "Leistungsglättung (s)"
+          "standby_threshold_w": "Standby Threshold (W)",
+          "active_threshold_w": "Active Threshold (W)",
+          "on_delay_s": "On Delay (s)",
+          "active_standby_delay_s": "Active/Standby Delay (s)",
+          "session_end_grace_s": "Session End Grace Period (s)",
+          "min_session_s": "Minimum Session Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
         },
         "data_description": {
-          "standby_threshold_w": "OFF → STANDBY wenn Power darüber",
-          "active_threshold_w": "STANDBY → ACTIVE wenn Power darüber",
-          "on_delay_s": "Verzögerung für OFF → STANDBY/ACTIVE",
-          "active_standby_delay_s": "Verzögerung für ACTIVE ↔ STANDBY",
-          "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions kürzer als dies werden ignoriert",
-          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
+          "standby_threshold_w": "OFF → STANDBY when power above",
+          "active_threshold_w": "STANDBY → ACTIVE when power above",
+          "on_delay_s": "Delay for OFF → STANDBY/ACTIVE",
+          "active_standby_delay_s": "Delay for ACTIVE ↔ STANDBY",
+          "session_end_grace_s": "Delay for STANDBY/ACTIVE → OFF",
+          "min_session_s": "Sessions shorter than this are ignored",
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "schedule": {
-        "title": "Zeitsteuerung",
-        "description": "Optional: Schalter nur zu bestimmten Zeiten erlauben.",
+        "title": "Schedule",
+        "description": "Optional: Allow switch only at certain times.",
         "data": {
-          "schedule_enabled": "Zeitsteuerung aktivieren",
-          "schedule_start": "Startzeit",
-          "schedule_end": "Endzeit",
-          "schedule_days": "Erlaubte Tage"
+          "schedule_enabled": "Enable Schedule",
+          "schedule_start": "Start Time",
+          "schedule_end": "End Time",
+          "schedule_days": "Allowed Days"
         }
       }
     },
     "error": {
-      "required": "Dieses Feld ist erforderlich"
+      "required": "This field is required"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Einstellungen",
-        "description": "Wählen Sie einen Bereich zum Bearbeiten.",
+        "title": "Settings",
+        "description": "Select an area to edit.",
         "menu_options": {
-          "thresholds": "Schwellwerte",
-          "timing": "Timing / Verzögerungen",
-          "schedule": "Zeitsteuerung",
-          "auto_off": "Auto-Abschaltung"
+          "thresholds": "Thresholds",
+          "timing": "Timing / Delays",
+          "schedule": "Schedule",
+          "auto_off": "Auto-Off Timer"
         }
       },
       "thresholds": {
-        "title": "Schwellwerte",
-        "description": "Anpassen der Leistungs-Schwellwerte für Zustandserkennung.",
+        "title": "Thresholds",
+        "description": "Adjust power thresholds for state detection.",
         "data": {
-          "standby_threshold_w": "Standby-Schwellwert (W)",
-          "active_threshold_w": "Aktiv-Schwellwert (W)"
+          "standby_threshold_w": "Standby Threshold (W)",
+          "active_threshold_w": "Active Threshold (W)"
         }
       },
       "timing": {
-        "title": "Timing / Verzögerungen",
-        "description": "Anpassen der Verzögerungen und Mindestdauern.",
+        "title": "Timing / Delays",
+        "description": "Adjust delays and minimum durations.",
         "data": {
-          "on_delay_s": "Einschaltverzögerung (s)",
-          "off_delay_s": "Ausschaltverzögerung (s)",
-          "min_active_s": "Mindest-Aktivdauer (s)",
-          "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
-          "session_end_grace_s": "Session-Ende Toleranz (s)",
-          "min_session_s": "Mindest-Sessiondauer (s)",
-          "power_smoothing_s": "Leistungsglättung (s)"
+          "on_delay_s": "On Delay (s)",
+          "off_delay_s": "Off Delay (s)",
+          "min_active_s": "Minimum Active Duration (s)",
+          "active_standby_delay_s": "Active/Standby Delay (s)",
+          "session_end_grace_s": "Session End Grace Period (s)",
+          "min_session_s": "Minimum Session Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
         },
         "data_description": {
           "on_delay_s": "OFF → STANDBY/ACTIVE",
           "off_delay_s": "ACTIVE → OFF (Simple Mode)",
-          "min_active_s": "Zyklen kürzer als dies ignorieren",
+          "min_active_s": "Cycles shorter than this ignored",
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions kürzer als dies ignorieren",
-          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
+          "min_session_s": "Sessions shorter than this ignored",
+          "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
       "schedule": {
-        "title": "Zeitsteuerung",
-        "description": "Schalter nur zu bestimmten Zeiten erlauben.",
+        "title": "Schedule",
+        "description": "Allow switch only at certain times.",
         "data": {
-          "schedule_enabled": "Zeitsteuerung aktivieren",
-          "schedule_start": "Startzeit",
-          "schedule_end": "Endzeit",
-          "schedule_days": "Erlaubte Tage"
+          "schedule_enabled": "Enable Schedule",
+          "schedule_start": "Start Time",
+          "schedule_end": "End Time",
+          "schedule_days": "Allowed Days"
         }
       },
       "auto_off": {
-        "title": "Auto-Abschaltung",
-        "description": "Automatisch ausschalten nach einer bestimmten Zeit.",
+        "title": "Auto-Off Timer",
+        "description": "Automatically turn off after a certain time.",
         "data": {
-          "auto_off_enabled": "Auto-Abschaltung aktivieren",
-          "auto_off_minutes": "Zeit bis Abschaltung (Minuten)"
+          "auto_off_enabled": "Enable Auto-Off",
+          "auto_off_minutes": "Turn off after (minutes)"
         }
       }
     }
@@ -128,69 +128,69 @@
   "entity": {
     "sensor": {
       "state": {
-        "name": "Status",
+        "name": "State",
         "state": {
-          "off": "Aus",
+          "off": "Off",
           "standby": "Standby",
-          "active": "Aktiv",
-          "blocked": "Gesperrt"
+          "active": "Active",
+          "blocked": "Blocked"
         }
       },
       "sessions_total": {
-        "name": "Sessions gesamt"
+        "name": "Total Sessions"
       },
       "sessions_today": {
-        "name": "Sessions heute"
+        "name": "Sessions Today"
       },
       "last_session_duration": {
-        "name": "Letzte Session Dauer"
+        "name": "Last Session Duration"
       },
       "last_session_energy": {
-        "name": "Letzte Session Energie"
+        "name": "Last Session Energy"
       },
       "last_session_peak_power": {
-        "name": "Letzte Session Peak"
+        "name": "Last Session Peak Power"
       },
       "energy_today": {
-        "name": "Energie heute"
+        "name": "Energy Today"
       },
       "energy_total": {
-        "name": "Energie gesamt"
+        "name": "Total Energy"
       },
       "current_session_duration": {
-        "name": "Aktuelle Session Dauer"
+        "name": "Current Session Duration"
       },
       "current_session_energy": {
-        "name": "Aktuelle Session Energie"
+        "name": "Current Session Energy"
       },
       "current_session_peak_power": {
-        "name": "Aktuelle Session Peak"
+        "name": "Current Session Peak Power"
       },
       "avg_session_duration": {
-        "name": "Ø Session Dauer"
+        "name": "Avg Session Duration"
       },
       "avg_session_energy": {
-        "name": "Ø Session Energie"
+        "name": "Avg Session Energy"
       },
       "auto_off_at": {
-        "name": "Auto-Aus um"
+        "name": "Auto Off At"
       },
       "smoothed_power": {
-        "name": "Geglättete Leistung"
+        "name": "Smoothed Power"
       }
     },
     "binary_sensor": {
       "active": {
-        "name": "Aktiv"
+        "name": "Active"
       },
       "on": {
-        "name": "Eingeschaltet"
+        "name": "On"
       },
       "schedule_blocked": {
-        "name": "Zeitsperre aktiv"
+        "name": "Schedule Blocked"
       },
       "schedule_turned_off": {
-        "name": "Wegen Zeitsperre aus"
+        "name": "Turned Off By Schedule"
       }
     }
   }
