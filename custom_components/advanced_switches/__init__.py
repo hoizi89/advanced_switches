@@ -725,6 +725,7 @@ class AdvancedSwitchController:
 
         elif entity_id == self._switch_entity:
             # Handle auto-off timer based on physical switch state
+            _LOGGER.debug("%s: Switch state changed to %s", self._device_name, new_state.state)
             if new_state.state == "on":
                 self._start_auto_off_timer()
             else:
@@ -868,7 +869,11 @@ class AdvancedSwitchController:
 
     def _start_auto_off_timer(self) -> None:
         """Start auto-off timer."""
-        if not self._auto_off_enabled or self._auto_off_timer is not None:
+        if not self._auto_off_enabled:
+            _LOGGER.debug("%s: Auto-off not enabled, skipping timer", self._device_name)
+            return
+        if self._auto_off_timer is not None:
+            _LOGGER.debug("%s: Auto-off timer already running", self._device_name)
             return
 
         # Calculate when auto-off will trigger
@@ -889,7 +894,7 @@ class AdvancedSwitchController:
         self._auto_off_timer = async_call_later(
             self.hass, self._auto_off_minutes * 60, auto_off_callback
         )
-        _LOGGER.debug(
+        _LOGGER.info(
             "%s: Auto-off timer started for %d minutes (at %s)",
             self._device_name,
             self._auto_off_minutes,
