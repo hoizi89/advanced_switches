@@ -31,7 +31,8 @@
           "on_delay_s": "Einschaltverzögerung (s)",
           "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
-          "min_session_s": "Mindest-Sessiondauer (s)"
+          "min_session_s": "Mindest-Sessiondauer (s)",
+          "power_smoothing_s": "Leistungsglättung (s)"
         },
         "data_description": {
           "standby_threshold_w": "OFF → STANDBY wenn Power darüber",
@@ -39,7 +40,8 @@
           "on_delay_s": "Verzögerung für OFF → STANDBY/ACTIVE",
           "active_standby_delay_s": "Verzögerung für ACTIVE ↔ STANDBY",
           "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions kürzer als dies werden ignoriert"
+          "min_session_s": "Sessions kürzer als dies werden ignoriert",
+          "power_smoothing_s": "Durchschnitt über X Sekunden"
         }
       },
       "schedule": {
@@ -86,7 +88,8 @@
           "min_active_s": "Mindest-Aktivdauer (s)",
           "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
-          "min_session_s": "Mindest-Sessiondauer (s)"
+          "min_session_s": "Mindest-Sessiondauer (s)",
+          "power_smoothing_s": "Leistungsglättung (s)"
         },
         "data_description": {
           "on_delay_s": "OFF → STANDBY/ACTIVE",
@@ -94,7 +97,8 @@
           "min_active_s": "Zyklen kürzer als dies ignorieren",
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions kürzer als dies ignorieren"
+          "min_session_s": "Sessions kürzer als dies ignorieren",
+          "power_smoothing_s": "Durchschnitt über X Sekunden"
         }
       },
       "schedule": {
@@ -166,6 +170,9 @@
       },
       "auto_off_at": {
         "name": "Auto-Aus um"
+      },
+      "smoothed_power": {
+        "name": "Geglättete Leistung"
       }
     },
     "binary_sensor": {

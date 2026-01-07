@@ -23,6 +23,7 @@ from .const import (
     CONF_OFF_DELAY_S,
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
+    CONF_POWER_SMOOTHING_S,
     CONF_SCHEDULE_DAYS,
     CONF_SCHEDULE_ENABLED,
     CONF_SCHEDULE_END,
@@ -39,6 +40,7 @@ from .const import (
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
     DEFAULT_ON_DELAY_S,
+    DEFAULT_POWER_SMOOTHING_S,
     DEFAULT_SCHEDULE_DAYS,
     DEFAULT_SCHEDULE_ENABLED,
     DEFAULT_SCHEDULE_END,
@@ -282,6 +284,18 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                         selector.NumberSelectorConfig(
                             min=0,
                             max=600,
+                            step=1,
+                            unit_of_measurement="s",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_POWER_SMOOTHING_S,
+                        default=DEFAULT_POWER_SMOOTHING_S,
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0,
+                            max=300,
                             step=1,
                             unit_of_measurement="s",
                             mode=selector.NumberSelectorMode.BOX,
@@ -534,6 +548,18 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                             selector.NumberSelectorConfig(
                                 min=0,
                                 max=600,
+                                step=1,
+                                unit_of_measurement="s",
+                                mode=selector.NumberSelectorMode.BOX,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_POWER_SMOOTHING_S,
+                            default=current.get(CONF_POWER_SMOOTHING_S, DEFAULT_POWER_SMOOTHING_S),
+                        ): selector.NumberSelector(
+                            selector.NumberSelectorConfig(
+                                min=0,
+                                max=300,
                                 step=1,
                                 unit_of_measurement="s",
                                 mode=selector.NumberSelectorMode.BOX,

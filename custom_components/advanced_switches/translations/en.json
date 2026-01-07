@@ -31,7 +31,8 @@
           "on_delay_s": "On Delay (s)",
           "active_standby_delay_s": "Active/Standby Delay (s)",
           "session_end_grace_s": "Session End Grace Period (s)",
-          "min_session_s": "Minimum Session Duration (s)"
+          "min_session_s": "Minimum Session Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
         },
         "data_description": {
           "standby_threshold_w": "OFF → STANDBY when power above",
@@ -39,7 +40,8 @@
           "on_delay_s": "Delay for OFF → STANDBY/ACTIVE",
           "active_standby_delay_s": "Delay for ACTIVE ↔ STANDBY",
           "session_end_grace_s": "Delay for STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions shorter than this are ignored"
+          "min_session_s": "Sessions shorter than this are ignored",
+          "power_smoothing_s": "Average over X seconds"
         }
       },
       "schedule": {
@@ -86,7 +88,8 @@
           "min_active_s": "Minimum Active Duration (s)",
           "active_standby_delay_s": "Active/Standby Delay (s)",
           "session_end_grace_s": "Session End Grace Period (s)",
-          "min_session_s": "Minimum Session Duration (s)"
+          "min_session_s": "Minimum Session Duration (s)",
+          "power_smoothing_s": "Power Smoothing (s)"
         },
         "data_description": {
           "on_delay_s": "OFF → STANDBY/ACTIVE",
@@ -94,7 +97,8 @@
           "min_active_s": "Cycles shorter than this ignored",
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
-          "min_session_s": "Sessions shorter than this ignored"
+          "min_session_s": "Sessions shorter than this ignored",
+          "power_smoothing_s": "Average over X seconds"
         }
       },
       "schedule": {
@@ -166,6 +170,9 @@
       },
       "auto_off_at": {
         "name": "Auto Off At"
+      },
+      "smoothed_power": {
+        "name": "Smoothed Power"
       }
     },
     "binary_sensor": {

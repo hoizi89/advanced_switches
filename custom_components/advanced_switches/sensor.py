@@ -53,6 +53,8 @@ async def async_setup_entry(
         # Average sensors (diagnostic)
         AvgSessionDurationSensor(controller, entry),
         AvgSessionEnergySensor(controller, entry),
+        # Smoothed power sensor (diagnostic)
+        SmoothedPowerSensor(controller, entry),
     ]
 
     # Add auto-off timestamp sensor if auto-off is enabled
@@ -509,3 +511,28 @@ class AutoOffAtSensor(BaseEntity):
     def native_value(self):
         """Return when auto-off will trigger."""
         return self._ctrl.auto_off_at
+
+
+class SmoothedPowerSensor(BaseEntity):
+    """Sensor showing smoothed (averaged) power value."""
+
+    _attr_translation_key = "smoothed_power"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:chart-line-variant"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_smoothed_power"
+
+    @property
+    def native_value(self) -> float:
+        """Return the smoothed power value."""
+        return self._ctrl.smoothed_power

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from datetime import date, datetime, time, timedelta
 from typing import Any, Callable
 
@@ -39,6 +40,7 @@ from .const import (
     CONF_OFF_DELAY_S,
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
+    CONF_POWER_SMOOTHING_S,
     CONF_SCHEDULE_DAYS,
     CONF_SCHEDULE_ENABLED,
     CONF_SCHEDULE_END,
@@ -55,6 +57,7 @@ from .const import (
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
     DEFAULT_ON_DELAY_S,
+    DEFAULT_POWER_SMOOTHING_S,
     DEFAULT_SCHEDULE_DAYS,
     DEFAULT_SCHEDULE_ENABLED,
     DEFAULT_SCHEDULE_END,
@@ -173,6 +176,12 @@ class AdvancedSwitchController:
                 CONF_SESSION_END_GRACE_S, DEFAULT_SESSION_END_GRACE_S
             )
             self._min_duration_s: int = entry.data.get(CONF_MIN_SESSION_S, DEFAULT_MIN_SESSION_S)
+            self._power_smoothing_s: int = entry.data.get(
+                CONF_POWER_SMOOTHING_S, DEFAULT_POWER_SMOOTHING_S
+            )
+
+        # Power smoothing - store (timestamp, power) tuples
+        self._power_readings: deque[tuple[datetime, float]] = deque()
 
         # Current state
         self._state: str = STATE_OFF
@@ -321,6 +330,40 @@ class AdvancedSwitchController:
     def current_power(self) -> float:
         """Return current power."""
         return self._current_power
+
+    @property
+    def smoothed_power(self) -> float:
+        """Return smoothed (averaged) power value."""
+        return self._calculate_smoothed_power()
+
+    def _calculate_smoothed_power(self) -> float:
+        """Calculate moving average of power readings."""
+        if not self._power_readings:
+            return self._current_power
+
+        now = datetime.now()
+        cutoff = now - timedelta(seconds=self._power_smoothing_s)
+
+        # Remove old readings
+        while self._power_readings and self._power_readings[0][0] < cutoff:
+            self._power_readings.popleft()
+
+        if not self._power_readings:
+            return self._current_power
+
+        # Calculate average
+        total = sum(reading[1] for reading in self._power_readings)
+        return round(total / len(self._power_readings), 2)
+
+    def _add_power_reading(self, power: float) -> None:
+        """Add a new power reading to the buffer."""
+        now = datetime.now()
+        self._power_readings.append((now, power))
+
+        # Clean up old readings
+        cutoff = now - timedelta(seconds=self._power_smoothing_s)
+        while self._power_readings and self._power_readings[0][0] < cutoff:
+            self._power_readings.popleft()
 
     @property
     def session_peak_power(self) -> float:
@@ -596,6 +639,7 @@ class AdvancedSwitchController:
                 try:
                     power = float(power_state.state)
                     self._current_power = power
+                    self._add_power_reading(power)
                     await self._handle_power_change(power, initial=True)
                 except ValueError:
                     pass
@@ -654,10 +698,14 @@ class AdvancedSwitchController:
             try:
                 power = float(new_state.state)
                 self._current_power = power
-                # Track peak power during session
+                # Add to smoothing buffer
+                self._add_power_reading(power)
+                # Track peak power during session (use raw power for peak)
                 if self._state != STATE_OFF and power > self._session_peak_power:
                     self._session_peak_power = power
-                await self._handle_power_change(power)
+                # Use smoothed power for state machine
+                smoothed = self._calculate_smoothed_power()
+                await self._handle_power_change(smoothed)
             except ValueError:
                 _LOGGER.debug("Invalid power value: %s", new_state.state)
 
