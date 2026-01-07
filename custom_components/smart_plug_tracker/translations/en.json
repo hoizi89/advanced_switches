@@ -1,0 +1,77 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Device",
+        "description": "Configure a Smart Plug Tracker device.",
+        "data": {
+          "device_name": "Device Name",
+          "switch_entity": "Switch Entity",
+          "power_entity": "Power Entity (Watt)",
+          "energy_entity": "Energy Entity (kWh)",
+          "mode": "Operating Mode"
+        }
+      },
+      "simple_params": {
+        "title": "Simple Mode Parameters",
+        "description": "Configure parameters for Simple Mode (OFF/ACTIVE).",
+        "data": {
+          "active_threshold_w": "Active Threshold (W)",
+          "on_delay_s": "On Delay (s)",
+          "off_delay_s": "Off Delay (s)",
+          "min_active_s": "Minimum Active Duration (s)"
+        }
+      },
+      "standby_params": {
+        "title": "Standby Mode Parameters",
+        "description": "Configure parameters for Standby Mode (OFF/STANDBY/ACTIVE).",
+        "data": {
+          "standby_threshold_w": "Standby Threshold (W)",
+          "active_threshold_w": "Active Threshold (W)",
+          "on_delay_s": "On Delay (s)",
+          "off_delay_s": "Off Delay (s)",
+          "session_end_grace_s": "Session End Grace Period (s)",
+          "min_session_s": "Minimum Session Duration (s)"
+        }
+      }
+    },
+    "error": {
+      "required": "This field is required"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "state": {
+        "name": "State"
+      },
+      "sessions_total": {
+        "name": "Total Sessions"
+      },
+      "sessions_today": {
+        "name": "Sessions Today"
+      },
+      "last_session_duration": {
+        "name": "Last Session Duration"
+      },
+      "last_session_energy": {
+        "name": "Last Session Energy"
+      },
+      "energy_today": {
+        "name": "Energy Today"
+      }
+    },
+    "switch": {
+      "power": {
+        "name": "Power"
+      }
+    },
+    "binary_sensor": {
+      "active": {
+        "name": "Active"
+      },
+      "on": {
+        "name": "On"
+      }
+    }
+  }
+}

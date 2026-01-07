@@ -1,0 +1,77 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gerät hinzufügen",
+        "description": "Konfigurieren Sie ein Smart Plug Tracker Gerät.",
+        "data": {
+          "device_name": "Gerätename",
+          "switch_entity": "Switch Entity (Steckdose)",
+          "power_entity": "Power Entity (Watt)",
+          "energy_entity": "Energy Entity (kWh)",
+          "mode": "Betriebsmodus"
+        }
+      },
+      "simple_params": {
+        "title": "Simple Mode Parameter",
+        "description": "Konfigurieren Sie die Parameter für den Simple Mode (OFF/ACTIVE).",
+        "data": {
+          "active_threshold_w": "Aktiv-Schwellwert (W)",
+          "on_delay_s": "Einschaltverzögerung (s)",
+          "off_delay_s": "Ausschaltverzögerung (s)",
+          "min_active_s": "Mindest-Aktivdauer (s)"
+        }
+      },
+      "standby_params": {
+        "title": "Standby Mode Parameter",
+        "description": "Konfigurieren Sie die Parameter für den Standby Mode (OFF/STANDBY/ACTIVE).",
+        "data": {
+          "standby_threshold_w": "Standby-Schwellwert (W)",
+          "active_threshold_w": "Aktiv-Schwellwert (W)",
+          "on_delay_s": "Einschaltverzögerung (s)",
+          "off_delay_s": "Ausschaltverzögerung (s)",
+          "session_end_grace_s": "Session-Ende Toleranz (s)",
+          "min_session_s": "Mindest-Sessiondauer (s)"
+        }
+      }
+    },
+    "error": {
+      "required": "Dieses Feld ist erforderlich"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "state": {
+        "name": "Status"
+      },
+      "sessions_total": {
+        "name": "Sessions gesamt"
+      },
+      "sessions_today": {
+        "name": "Sessions heute"
+      },
+      "last_session_duration": {
+        "name": "Letzte Session Dauer"
+      },
+      "last_session_energy": {
+        "name": "Letzte Session Energie"
+      },
+      "energy_today": {
+        "name": "Energie heute"
+      }
+    },
+    "switch": {
+      "power": {
+        "name": "Schalter"
+      }
+    },
+    "binary_sensor": {
+      "active": {
+        "name": "Aktiv"
+      },
+      "on": {
+        "name": "Eingeschaltet"
+      }
+    }
+  }
+}
