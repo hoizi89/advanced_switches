@@ -181,6 +181,7 @@ class AdvancedSwitchController:
         self._pending_off_timer: Any | None = None
         self._pending_target_state: str | None = None
         self._auto_off_timer: Any | None = None
+        self._pending_session_end: bool = False  # Ignore fluctuations during grace period
 
         # Persistent statistics
         self._sessions_total: int = 0
@@ -625,21 +626,30 @@ class AdvancedSwitchController:
 
         elif self._state == STATE_STANDBY:
             if power >= self._active_threshold_w:
+                # Real activity resumed - cancel pending off and go to active
                 self._cancel_off_timer()
                 self._transition_to(STATE_ACTIVE)
             elif power < self._standby_threshold_w:
+                # Start grace timer (won't restart if already running)
                 self._start_off_timer(use_grace=True)
-            else:
+            elif not self._pending_session_end:
+                # Only cancel if NOT in pending-off mode
+                # This prevents flickering from resetting the grace timer
                 self._cancel_off_timer()
 
         elif self._state == STATE_ACTIVE:
             if power < self._standby_threshold_w:
+                # Start grace timer (won't restart if already running)
                 self._start_off_timer(use_grace=True)
             elif power < self._active_threshold_w:
-                self._cancel_off_timer()
+                # Drop to standby, but only cancel timer if not pending off
+                if not self._pending_session_end:
+                    self._cancel_off_timer()
                 self._transition_to(STATE_STANDBY)
-            else:
+            elif self._pending_session_end:
+                # Back to full active power - cancel pending off
                 self._cancel_off_timer()
+            # If power is still high and no pending off, do nothing
 
     def _start_on_timer(self, target_state: str) -> None:
         """Start timer for state transition to on/active."""
@@ -671,23 +681,32 @@ class AdvancedSwitchController:
     def _start_off_timer(self, use_grace: bool = False) -> None:
         """Start timer for state transition to off."""
         if self._pending_off_timer is not None:
-            return
+            return  # Timer already running, don't restart
 
         delay = self._session_end_grace_s if use_grace else self._off_delay_s
+        self._pending_session_end = True  # Enter pending-off mode
 
         @callback
         def off_timer_callback(_: datetime) -> None:
             """Handle off timer expiration."""
             self._pending_off_timer = None
+            self._pending_session_end = False
             self._end_session()
 
         self._pending_off_timer = async_call_later(self.hass, delay, off_timer_callback)
+        _LOGGER.debug(
+            "%s: Grace timer started (%ds), ignoring small fluctuations",
+            self._device_name,
+            delay,
+        )
 
     def _cancel_off_timer(self) -> None:
         """Cancel pending off timer."""
         if self._pending_off_timer is not None:
             self._pending_off_timer()
             self._pending_off_timer = None
+            self._pending_session_end = False
+            _LOGGER.debug("%s: Grace timer cancelled, activity resumed", self._device_name)
 
     def _start_auto_off_timer(self) -> None:
         """Start auto-off timer."""
@@ -841,6 +860,7 @@ class AdvancedSwitchController:
         self._session_start_time = None
         self._session_start_energy = None
         self._session_peak_power = 0.0
+        self._pending_session_end = False
         self._state = STATE_OFF
         self._notify_entities()
 
