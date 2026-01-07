@@ -102,7 +102,13 @@
   "entity": {
     "sensor": {
       "state": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "off": "Aus",
+          "standby": "Standby",
+          "active": "Aktiv",
+          "blocked": "Gesperrt"
+        }
       },
       "sessions_total": {
         "name": "Sessions gesamt"

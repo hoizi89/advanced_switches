@@ -102,7 +102,13 @@
   "entity": {
     "sensor": {
       "state": {
-        "name": "State"
+        "name": "State",
+        "state": {
+          "off": "Off",
+          "standby": "Standby",
+          "active": "Active",
+          "blocked": "Blocked"
+        }
       },
       "sessions_total": {
         "name": "Total Sessions"

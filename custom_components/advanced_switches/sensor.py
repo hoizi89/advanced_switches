@@ -98,6 +98,8 @@ class StateSensor(BaseEntity):
     """Sensor showing current state (off/standby/active/blocked)."""
 
     _attr_translation_key = "state"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [STATE_OFF, STATE_STANDBY, STATE_ACTIVE, STATE_BLOCKED]
 
     def __init__(
         self,
