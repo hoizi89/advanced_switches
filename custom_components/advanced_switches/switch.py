@@ -1,4 +1,4 @@
-"""Switch platform for Smart Plug Tracker."""
+"""Switch platform for Advanced Switches."""
 from __future__ import annotations
 
 import logging
@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import SmartPlugTrackerController
+from . import AdvancedSwitchController
 from .const import CONF_DEVICE_NAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up switch entities."""
-    controller: SmartPlugTrackerController = hass.data[DOMAIN][entry.entry_id]
+    controller: AdvancedSwitchController = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([ProxySwitch(controller, entry)])
 
 
 class ProxySwitch(SwitchEntity):
-    """Proxy switch that controls the real smart plug."""
+    """Proxy switch that controls the real smart plug with schedule support."""
 
     _attr_should_poll = False
     _attr_has_entity_name = True
@@ -38,7 +38,7 @@ class ProxySwitch(SwitchEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the switch."""
@@ -49,7 +49,7 @@ class ProxySwitch(SwitchEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.data[CONF_DEVICE_NAME],
-            manufacturer="Smart Plug Tracker",
+            manufacturer="Advanced Switches",
             model="Virtual Device",
         )
 
@@ -61,8 +61,20 @@ class ProxySwitch(SwitchEntity):
             return None
         return state.state == STATE_ON
 
+    @property
+    def available(self) -> bool:
+        """Return if the switch is available (not blocked by schedule)."""
+        return not self._ctrl.schedule_blocked
+
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the switch on."""
+        """Turn the switch on (if allowed by schedule)."""
+        if self._ctrl.schedule_blocked:
+            _LOGGER.warning(
+                "%s: Cannot turn on - outside allowed schedule",
+                self._ctrl.device_name,
+            )
+            return
+
         await self.hass.services.async_call(
             "switch",
             "turn_on",
@@ -83,6 +95,7 @@ class ProxySwitch(SwitchEntity):
         """Register state change listener."""
         await super().async_added_to_hass()
 
+        # Listen for real switch changes
         @callback
         def state_listener(event) -> None:
             """Handle state changes of the real switch."""
@@ -92,3 +105,16 @@ class ProxySwitch(SwitchEntity):
         self.async_on_remove(
             self.hass.bus.async_listen("state_changed", state_listener)
         )
+
+        # Listen for controller updates (schedule changes)
+        self._ctrl.register_entity_listener(self._on_controller_update)
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Unregister callbacks."""
+        self._ctrl.unregister_entity_listener(self._on_controller_update)
+        await super().async_will_remove_from_hass()
+
+    @callback
+    def _on_controller_update(self) -> None:
+        """Handle controller updates."""
+        self.async_write_ha_state()

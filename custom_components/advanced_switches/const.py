@@ -1,7 +1,7 @@
-"""Constants for Smart Plug Tracker integration."""
+"""Constants for Advanced Switches integration."""
 from homeassistant.const import Platform
 
-DOMAIN = "smart_plug_tracker"
+DOMAIN = "advanced_switches"
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH, Platform.BINARY_SENSOR]
 
 # Config keys
@@ -26,6 +26,12 @@ CONF_STANDBY_THRESHOLD_W = "standby_threshold_w"
 CONF_SESSION_END_GRACE_S = "session_end_grace_s"
 CONF_MIN_SESSION_S = "min_session_s"
 
+# Schedule parameters
+CONF_SCHEDULE_ENABLED = "schedule_enabled"
+CONF_SCHEDULE_START = "schedule_start"
+CONF_SCHEDULE_END = "schedule_end"
+CONF_SCHEDULE_DAYS = "schedule_days"
+
 # Defaults - Simple mode
 DEFAULT_ACTIVE_THRESHOLD_W = 50
 DEFAULT_ON_DELAY_S = 3
@@ -38,10 +44,17 @@ DEFAULT_ACTIVE_THRESHOLD_W_STANDBY = 1000
 DEFAULT_SESSION_END_GRACE_S = 120
 DEFAULT_MIN_SESSION_S = 60
 
+# Defaults - Schedule
+DEFAULT_SCHEDULE_ENABLED = False
+DEFAULT_SCHEDULE_START = "06:00"
+DEFAULT_SCHEDULE_END = "22:00"
+DEFAULT_SCHEDULE_DAYS = [0, 1, 2, 3, 4, 5, 6]  # All days (Mon=0, Sun=6)
+
 # States
 STATE_OFF = "off"
 STATE_STANDBY = "standby"
 STATE_ACTIVE = "active"
+STATE_BLOCKED = "blocked"  # Outside schedule
 
 # Attributes for persistence
 ATTR_SESSIONS_TOTAL = "sessions_total"

@@ -1,4 +1,4 @@
-"""Binary sensor platform for Smart Plug Tracker."""
+"""Binary sensor platform for Advanced Switches."""
 from __future__ import annotations
 
 import logging
@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import SmartPlugTrackerController
+from . import AdvancedSwitchController
 from .const import (
     CONF_DEVICE_NAME,
     DOMAIN,
@@ -30,13 +30,17 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up binary sensor entities."""
-    controller: SmartPlugTrackerController = hass.data[DOMAIN][entry.entry_id]
+    controller: AdvancedSwitchController = hass.data[DOMAIN][entry.entry_id]
 
     entities = [ActiveBinarySensor(controller, entry)]
 
     # Only add "on" sensor for standby mode
     if controller.mode == MODE_STANDBY:
         entities.append(OnBinarySensor(controller, entry))
+
+    # Add schedule blocked sensor if schedule is enabled
+    if controller.schedule_enabled:
+        entities.append(ScheduleBlockedSensor(controller, entry))
 
     async_add_entities(entities)
 
@@ -49,7 +53,7 @@ class BaseBinarySensor(BinarySensorEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the binary sensor."""
@@ -58,7 +62,7 @@ class BaseBinarySensor(BinarySensorEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.data[CONF_DEVICE_NAME],
-            manufacturer="Smart Plug Tracker",
+            manufacturer="Advanced Switches",
             model="Virtual Device",
         )
 
@@ -86,7 +90,7 @@ class ActiveBinarySensor(BaseBinarySensor):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -107,7 +111,7 @@ class OnBinarySensor(BaseBinarySensor):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -118,3 +122,24 @@ class OnBinarySensor(BaseBinarySensor):
     def is_on(self) -> bool:
         """Return true if device is in standby or active state."""
         return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+
+
+class ScheduleBlockedSensor(BaseBinarySensor):
+    """Binary sensor showing if device is blocked by schedule."""
+
+    _attr_translation_key = "schedule_blocked"
+    _attr_device_class = BinarySensorDeviceClass.LOCK
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_schedule_blocked"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if device is blocked by schedule."""
+        return self._ctrl.schedule_blocked

@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Add Device",
-        "description": "Configure a Smart Plug Tracker device.",
+        "description": "Configure an Advanced Switches device.",
         "data": {
           "device_name": "Device Name",
           "switch_entity": "Switch Entity",
@@ -32,6 +32,16 @@
           "off_delay_s": "Off Delay (s)",
           "session_end_grace_s": "Session End Grace Period (s)",
           "min_session_s": "Minimum Session Duration (s)"
+        }
+      },
+      "schedule": {
+        "title": "Schedule",
+        "description": "Optional: Allow switch only at certain times.",
+        "data": {
+          "schedule_enabled": "Enable Schedule",
+          "schedule_start": "Start Time",
+          "schedule_end": "End Time",
+          "schedule_days": "Allowed Days"
         }
       }
     },
@@ -71,6 +81,9 @@
       },
       "on": {
         "name": "On"
+      },
+      "schedule_blocked": {
+        "name": "Schedule Blocked"
       }
     }
   }

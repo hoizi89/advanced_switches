@@ -1,4 +1,4 @@
-"""Config flow for Smart Plug Tracker integration."""
+"""Config flow for Advanced Switches integration."""
 from __future__ import annotations
 
 import logging
@@ -7,7 +7,6 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_NAME
 from homeassistant.helpers import selector
 
 from .const import (
@@ -20,6 +19,10 @@ from .const import (
     CONF_OFF_DELAY_S,
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
+    CONF_SCHEDULE_DAYS,
+    CONF_SCHEDULE_ENABLED,
+    CONF_SCHEDULE_END,
+    CONF_SCHEDULE_START,
     CONF_SESSION_END_GRACE_S,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
@@ -29,6 +32,10 @@ from .const import (
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
     DEFAULT_ON_DELAY_S,
+    DEFAULT_SCHEDULE_DAYS,
+    DEFAULT_SCHEDULE_ENABLED,
+    DEFAULT_SCHEDULE_END,
+    DEFAULT_SCHEDULE_START,
     DEFAULT_SESSION_END_GRACE_S,
     DEFAULT_STANDBY_THRESHOLD_W,
     DOMAIN,
@@ -38,9 +45,19 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+WEEKDAYS = [
+    {"value": "0", "label": "Montag"},
+    {"value": "1", "label": "Dienstag"},
+    {"value": "2", "label": "Mittwoch"},
+    {"value": "3", "label": "Donnerstag"},
+    {"value": "4", "label": "Freitag"},
+    {"value": "5", "label": "Samstag"},
+    {"value": "6", "label": "Sonntag"},
+]
 
-class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Smart Plug Tracker."""
+
+class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Advanced Switches."""
 
     VERSION = 1
 
@@ -55,7 +72,6 @@ class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            # Validate that all required entities are provided
             if not user_input.get(CONF_SWITCH_ENTITY):
                 errors[CONF_SWITCH_ENTITY] = "required"
             if not user_input.get(CONF_POWER_ENTITY):
@@ -65,7 +81,6 @@ class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
 
             if not errors:
                 self._data = user_input
-                # Go to mode-specific parameters
                 if user_input[CONF_MODE] == MODE_SIMPLE:
                     return await self.async_step_simple_params()
                 else:
@@ -117,7 +132,7 @@ class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle simple mode parameters."""
         if user_input is not None:
             self._data.update(user_input)
-            return self._create_entry()
+            return await self.async_step_schedule()
 
         return self.async_show_form(
             step_id="simple_params",
@@ -181,7 +196,7 @@ class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle standby mode parameters."""
         if user_input is not None:
             self._data.update(user_input)
-            return self._create_entry()
+            return await self.async_step_schedule()
 
         return self.async_show_form(
             step_id="standby_params",
@@ -257,6 +272,52 @@ class SmartPlugTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                             step=1,
                             unit_of_measurement="s",
                             mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_schedule(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle schedule configuration."""
+        if user_input is not None:
+            # Convert day strings back to integers
+            if CONF_SCHEDULE_DAYS in user_input:
+                user_input[CONF_SCHEDULE_DAYS] = [
+                    int(d) for d in user_input[CONF_SCHEDULE_DAYS]
+                ]
+            self._data.update(user_input)
+            return self._create_entry()
+
+        return self.async_show_form(
+            step_id="schedule",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCHEDULE_ENABLED,
+                        default=DEFAULT_SCHEDULE_ENABLED,
+                    ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_START,
+                        default=DEFAULT_SCHEDULE_START,
+                    ): selector.TimeSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_END,
+                        default=DEFAULT_SCHEDULE_END,
+                    ): selector.TimeSelector(),
+                    vol.Required(
+                        CONF_SCHEDULE_DAYS,
+                        default=[str(d) for d in DEFAULT_SCHEDULE_DAYS],
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(value=d["value"], label=d["label"])
+                                for d in WEEKDAYS
+                            ],
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
                         )
                     ),
                 }

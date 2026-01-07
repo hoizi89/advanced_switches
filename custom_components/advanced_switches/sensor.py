@@ -1,4 +1,4 @@
-"""Sensor platform for Smart Plug Tracker."""
+"""Sensor platform for Advanced Switches."""
 from __future__ import annotations
 
 import logging
@@ -16,11 +16,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import SmartPlugTrackerController
+from . import AdvancedSwitchController
 from .const import (
     CONF_DEVICE_NAME,
     DOMAIN,
     STATE_ACTIVE,
+    STATE_BLOCKED,
     STATE_OFF,
     STATE_STANDBY,
 )
@@ -34,7 +35,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor entities."""
-    controller: SmartPlugTrackerController = hass.data[DOMAIN][entry.entry_id]
+    controller: AdvancedSwitchController = hass.data[DOMAIN][entry.entry_id]
 
     entities = [
         StateSensor(controller, entry),
@@ -49,14 +50,14 @@ async def async_setup_entry(
 
 
 class BaseEntity(SensorEntity):
-    """Base class for Smart Plug Tracker sensors."""
+    """Base class for Advanced Switches sensors."""
 
     _attr_should_poll = False
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -65,7 +66,7 @@ class BaseEntity(SensorEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.data[CONF_DEVICE_NAME],
-            manufacturer="Smart Plug Tracker",
+            manufacturer="Advanced Switches",
             model="Virtual Device",
         )
 
@@ -86,13 +87,13 @@ class BaseEntity(SensorEntity):
 
 
 class StateSensor(BaseEntity):
-    """Sensor showing current state (off/standby/active)."""
+    """Sensor showing current state (off/standby/active/blocked)."""
 
     _attr_translation_key = "state"
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -111,6 +112,7 @@ class StateSensor(BaseEntity):
             STATE_OFF: "mdi:power-plug-off",
             STATE_STANDBY: "mdi:power-standby",
             STATE_ACTIVE: "mdi:power-plug",
+            STATE_BLOCKED: "mdi:clock-alert-outline",
         }
         return icons.get(self._ctrl.state, "mdi:help")
 
@@ -124,7 +126,7 @@ class SessionsTotalSensor(RestoreSensor, BaseEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -135,7 +137,6 @@ class SessionsTotalSensor(RestoreSensor, BaseEntity):
         """Restore state and register callbacks."""
         await super().async_added_to_hass()
 
-        # Restore previous state
         if (last_state := await self.async_get_last_state()) is not None:
             if last_state.attributes:
                 self._ctrl.restore_state(last_state.attributes)
@@ -160,7 +161,7 @@ class SessionsTodaySensor(BaseEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -183,7 +184,7 @@ class LastSessionDurationSensor(BaseEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -207,7 +208,7 @@ class LastSessionEnergySensor(BaseEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
@@ -231,7 +232,7 @@ class EnergyTodaySensor(BaseEntity):
 
     def __init__(
         self,
-        controller: SmartPlugTrackerController,
+        controller: AdvancedSwitchController,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""

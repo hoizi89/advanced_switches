@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Gerät hinzufügen",
-        "description": "Konfigurieren Sie ein Smart Plug Tracker Gerät.",
+        "description": "Konfigurieren Sie ein Advanced Switches Gerät.",
         "data": {
           "device_name": "Gerätename",
           "switch_entity": "Switch Entity (Steckdose)",
@@ -32,6 +32,16 @@
           "off_delay_s": "Ausschaltverzögerung (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)"
+        }
+      },
+      "schedule": {
+        "title": "Zeitsteuerung",
+        "description": "Optional: Schalter nur zu bestimmten Zeiten erlauben.",
+        "data": {
+          "schedule_enabled": "Zeitsteuerung aktivieren",
+          "schedule_start": "Startzeit",
+          "schedule_end": "Endzeit",
+          "schedule_days": "Erlaubte Tage"
         }
       }
     },
@@ -71,6 +81,9 @@
       },
       "on": {
         "name": "Eingeschaltet"
+      },
+      "schedule_blocked": {
+        "name": "Zeitsperre aktiv"
       }
     }
   }

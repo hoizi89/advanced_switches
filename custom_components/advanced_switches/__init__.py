@@ -1,14 +1,14 @@
-"""Smart Plug Tracker integration for Home Assistant."""
+"""Advanced Switches integration for Home Assistant."""
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Any, Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_time_change
 
 from .const import (
     ATTR_ENERGY_TODAY_KWH,
@@ -29,6 +29,10 @@ from .const import (
     CONF_OFF_DELAY_S,
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
+    CONF_SCHEDULE_DAYS,
+    CONF_SCHEDULE_ENABLED,
+    CONF_SCHEDULE_END,
+    CONF_SCHEDULE_START,
     CONF_SESSION_END_GRACE_S,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
@@ -38,6 +42,10 @@ from .const import (
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
     DEFAULT_ON_DELAY_S,
+    DEFAULT_SCHEDULE_DAYS,
+    DEFAULT_SCHEDULE_ENABLED,
+    DEFAULT_SCHEDULE_END,
+    DEFAULT_SCHEDULE_START,
     DEFAULT_SESSION_END_GRACE_S,
     DEFAULT_STANDBY_THRESHOLD_W,
     DOMAIN,
@@ -45,6 +53,7 @@ from .const import (
     MODE_STANDBY,
     PLATFORMS,
     STATE_ACTIVE,
+    STATE_BLOCKED,
     STATE_OFF,
     STATE_STANDBY,
 )
@@ -53,8 +62,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Smart Plug Tracker from a config entry."""
-    controller = SmartPlugTrackerController(hass, entry)
+    """Set up Advanced Switches from a config entry."""
+    controller = AdvancedSwitchController(hass, entry)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = controller
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -65,7 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    controller: SmartPlugTrackerController = hass.data[DOMAIN][entry.entry_id]
+    controller: AdvancedSwitchController = hass.data[DOMAIN][entry.entry_id]
     await controller.async_stop()
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -75,8 +84,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-class SmartPlugTrackerController:
-    """Controller for Smart Plug Tracker."""
+class AdvancedSwitchController:
+    """Controller for Advanced Switches."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the controller."""
@@ -90,6 +99,20 @@ class SmartPlugTrackerController:
         self._energy_entity: str = entry.data[CONF_ENERGY_ENTITY]
         self._mode: str = entry.data[CONF_MODE]
 
+        # Schedule configuration
+        self._schedule_enabled: bool = entry.data.get(
+            CONF_SCHEDULE_ENABLED, DEFAULT_SCHEDULE_ENABLED
+        )
+        self._schedule_start: time = self._parse_time(
+            entry.data.get(CONF_SCHEDULE_START, DEFAULT_SCHEDULE_START)
+        )
+        self._schedule_end: time = self._parse_time(
+            entry.data.get(CONF_SCHEDULE_END, DEFAULT_SCHEDULE_END)
+        )
+        self._schedule_days: list[int] = entry.data.get(
+            CONF_SCHEDULE_DAYS, DEFAULT_SCHEDULE_DAYS
+        )
+
         # Load mode-specific parameters
         if self._mode == MODE_SIMPLE:
             self._active_threshold_w: float = entry.data.get(
@@ -98,7 +121,7 @@ class SmartPlugTrackerController:
             self._on_delay_s: int = entry.data.get(CONF_ON_DELAY_S, DEFAULT_ON_DELAY_S)
             self._off_delay_s: int = entry.data.get(CONF_OFF_DELAY_S, DEFAULT_OFF_DELAY_S)
             self._min_duration_s: int = entry.data.get(CONF_MIN_ACTIVE_S, DEFAULT_MIN_ACTIVE_S)
-            self._standby_threshold_w: float = 0  # Not used in simple mode
+            self._standby_threshold_w: float = 0
             self._session_end_grace_s: int = self._off_delay_s
         else:  # Standby mode
             self._standby_threshold_w: float = entry.data.get(
@@ -121,13 +144,14 @@ class SmartPlugTrackerController:
         self._current_energy: float | None = None
         self._power_available: bool = True
         self._energy_available: bool = True
+        self._schedule_blocked: bool = False
 
         # Timers
         self._pending_on_timer: Any | None = None
         self._pending_off_timer: Any | None = None
         self._pending_target_state: str | None = None
 
-        # Persistent statistics (restored from entities)
+        # Persistent statistics
         self._sessions_total: int = 0
         self._sessions_today: int = 0
         self._energy_today_kwh: float = 0.0
@@ -139,6 +163,15 @@ class SmartPlugTrackerController:
         # Entity update listeners
         self._entity_listeners: list[Callable[[], None]] = []
         self._remove_listeners: list[Callable[[], None]] = []
+
+    @staticmethod
+    def _parse_time(time_str: str) -> time:
+        """Parse time string to time object."""
+        try:
+            parts = time_str.split(":")
+            return time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            return time(6, 0)
 
     @property
     def device_name(self) -> str:
@@ -153,6 +186,8 @@ class SmartPlugTrackerController:
     @property
     def state(self) -> str:
         """Return the current state."""
+        if self._schedule_blocked:
+            return STATE_BLOCKED
         return self._state
 
     @property
@@ -185,6 +220,83 @@ class SmartPlugTrackerController:
         """Return last session energy consumption."""
         return self._last_session_energy_kwh
 
+    @property
+    def schedule_enabled(self) -> bool:
+        """Return if schedule is enabled."""
+        return self._schedule_enabled
+
+    @property
+    def schedule_blocked(self) -> bool:
+        """Return if currently blocked by schedule."""
+        return self._schedule_blocked
+
+    @property
+    def schedule_start(self) -> time:
+        """Return schedule start time."""
+        return self._schedule_start
+
+    @property
+    def schedule_end(self) -> time:
+        """Return schedule end time."""
+        return self._schedule_end
+
+    @property
+    def schedule_days(self) -> list[int]:
+        """Return schedule days."""
+        return self._schedule_days
+
+    def _is_within_schedule(self) -> bool:
+        """Check if current time is within the allowed schedule."""
+        if not self._schedule_enabled:
+            return True
+
+        now = datetime.now()
+        current_time = now.time()
+        current_day = now.weekday()
+
+        # Check if today is an allowed day
+        if current_day not in self._schedule_days:
+            return False
+
+        # Check if current time is within range
+        if self._schedule_start <= self._schedule_end:
+            # Normal range (e.g., 06:00 - 22:00)
+            return self._schedule_start <= current_time <= self._schedule_end
+        else:
+            # Overnight range (e.g., 22:00 - 06:00)
+            return current_time >= self._schedule_start or current_time <= self._schedule_end
+
+    async def _enforce_schedule(self) -> None:
+        """Enforce the schedule by turning off switch if outside allowed time."""
+        was_blocked = self._schedule_blocked
+        self._schedule_blocked = not self._is_within_schedule()
+
+        if self._schedule_blocked and not was_blocked:
+            # Just entered blocked period
+            _LOGGER.info(
+                "%s: Outside schedule, turning off",
+                self._device_name,
+            )
+            # Turn off the real switch
+            await self.hass.services.async_call(
+                "switch",
+                "turn_off",
+                {"entity_id": self._switch_entity},
+                blocking=True,
+            )
+            # End any active session
+            if self._state != STATE_OFF:
+                self._end_session()
+            self._notify_entities()
+
+        elif not self._schedule_blocked and was_blocked:
+            # Just entered allowed period
+            _LOGGER.info(
+                "%s: Within schedule, switch enabled",
+                self._device_name,
+            )
+            self._notify_entities()
+
     def register_entity_listener(self, callback_fn: Callable[[], None]) -> None:
         """Register a callback for entity updates."""
         self._entity_listeners.append(callback_fn)
@@ -208,14 +320,12 @@ class SmartPlugTrackerController:
         if data.get(ATTR_LAST_SESSION_ENERGY_KWH) is not None:
             self._last_session_energy_kwh = float(data[ATTR_LAST_SESSION_ENERGY_KWH])
 
-        # Restore today's date for day reset logic
         if data.get(ATTR_TODAY_DATE):
             try:
                 self._today_date = date.fromisoformat(data[ATTR_TODAY_DATE])
             except (ValueError, TypeError):
                 self._today_date = date.today()
 
-        # Check if session was active before restart
         if data.get(ATTR_SESSION_ACTIVE):
             if data.get(ATTR_SESSION_START_TIME):
                 try:
@@ -228,8 +338,6 @@ class SmartPlugTrackerController:
             if data.get(ATTR_SESSION_START_ENERGY) is not None:
                 self._session_start_energy = float(data[ATTR_SESSION_START_ENERGY])
 
-            # If we had an active session, we'll check current power to decide
-            # whether to continue or end it
             _LOGGER.debug(
                 "Restored active session for %s, started at %s",
                 self._device_name,
@@ -263,8 +371,10 @@ class SmartPlugTrackerController:
 
     async def async_start(self) -> None:
         """Start the controller."""
-        # Check for day reset
         self._check_day_reset()
+
+        # Initial schedule check
+        await self._enforce_schedule()
 
         # Load initial energy value
         energy_state = self.hass.states.get(self._energy_entity)
@@ -274,14 +384,15 @@ class SmartPlugTrackerController:
             except ValueError:
                 pass
 
-        # Check current power to determine initial state or continue session
-        power_state = self.hass.states.get(self._power_entity)
-        if power_state and power_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            try:
-                power = float(power_state.state)
-                await self._handle_power_change(power, initial=True)
-            except ValueError:
-                pass
+        # Check current power
+        if not self._schedule_blocked:
+            power_state = self.hass.states.get(self._power_entity)
+            if power_state and power_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try:
+                    power = float(power_state.state)
+                    await self._handle_power_change(power, initial=True)
+                except ValueError:
+                    pass
 
         # Register state change listener
         @callback
@@ -295,27 +406,35 @@ class SmartPlugTrackerController:
             self.hass.bus.async_listen(EVENT_STATE_CHANGED, state_listener)
         )
 
-        _LOGGER.info("Smart Plug Tracker started for %s", self._device_name)
+        # Register schedule check every minute if schedule is enabled
+        if self._schedule_enabled:
+            @callback
+            def schedule_check(_: datetime) -> None:
+                """Check schedule every minute."""
+                self.hass.async_create_task(self._enforce_schedule())
+
+            self._remove_listeners.append(
+                async_track_time_change(self.hass, schedule_check, second=0)
+            )
+
+        _LOGGER.info("Advanced Switches started for %s", self._device_name)
 
     async def async_stop(self) -> None:
         """Stop the controller."""
-        # Cancel any pending timers
         self._cancel_on_timer()
         self._cancel_off_timer()
 
-        # Remove listeners
         for remove_listener in self._remove_listeners:
             remove_listener()
         self._remove_listeners.clear()
 
-        _LOGGER.info("Smart Plug Tracker stopped for %s", self._device_name)
+        _LOGGER.info("Advanced Switches stopped for %s", self._device_name)
 
     async def _on_state_changed(self, entity_id: str, new_state: Any) -> None:
         """Handle state changes from monitored entities."""
         if new_state is None:
             return
 
-        # Check for unavailable/unknown
         if new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             if entity_id == self._power_entity:
                 self._power_available = False
@@ -323,7 +442,6 @@ class SmartPlugTrackerController:
                 self._energy_available = False
             return
 
-        # Process power changes
         if entity_id == self._power_entity:
             self._power_available = True
             try:
@@ -332,7 +450,6 @@ class SmartPlugTrackerController:
             except ValueError:
                 _LOGGER.debug("Invalid power value: %s", new_state.state)
 
-        # Process energy changes
         elif entity_id == self._energy_entity:
             self._energy_available = True
             try:
@@ -342,6 +459,10 @@ class SmartPlugTrackerController:
 
     async def _handle_power_change(self, power: float, initial: bool = False) -> None:
         """Handle power value changes."""
+        # Don't process if blocked by schedule
+        if self._schedule_blocked:
+            return
+
         self._check_day_reset()
 
         if self._mode == MODE_SIMPLE:
@@ -354,7 +475,6 @@ class SmartPlugTrackerController:
         if self._state == STATE_OFF:
             if power >= self._active_threshold_w:
                 if initial:
-                    # Immediate transition on startup
                     self._transition_to(STATE_ACTIVE)
                 else:
                     self._start_on_timer(STATE_ACTIVE)
@@ -385,35 +505,27 @@ class SmartPlugTrackerController:
 
         elif self._state == STATE_STANDBY:
             if power >= self._active_threshold_w:
-                # Immediate transition to active (no delay needed)
                 self._cancel_off_timer()
                 self._transition_to(STATE_ACTIVE)
             elif power < self._standby_threshold_w:
-                # Start grace timer for session end
                 self._start_off_timer(use_grace=True)
             else:
-                # Still in standby range, cancel any off timer
                 self._cancel_off_timer()
 
         elif self._state == STATE_ACTIVE:
             if power < self._standby_threshold_w:
-                # Power dropped below standby, start grace timer
                 self._start_off_timer(use_grace=True)
             elif power < self._active_threshold_w:
-                # Power in standby range, transition to standby (no timer)
                 self._cancel_off_timer()
                 self._transition_to(STATE_STANDBY)
             else:
-                # Still active, cancel any off timer
                 self._cancel_off_timer()
 
     def _start_on_timer(self, target_state: str) -> None:
         """Start timer for state transition to on/active."""
         if self._pending_on_timer is not None:
-            # Timer already running for same target
             if self._pending_target_state == target_state:
                 return
-            # Different target, cancel and restart
             self._cancel_on_timer()
 
         self._pending_target_state = target_state
@@ -439,7 +551,7 @@ class SmartPlugTrackerController:
     def _start_off_timer(self, use_grace: bool = False) -> None:
         """Start timer for state transition to off."""
         if self._pending_off_timer is not None:
-            return  # Timer already running
+            return
 
         delay = self._session_end_grace_s if use_grace else self._off_delay_s
 
@@ -464,7 +576,6 @@ class SmartPlugTrackerController:
         if new_state == old_state:
             return
 
-        # Starting a new session
         if old_state == STATE_OFF and new_state in (STATE_STANDBY, STATE_ACTIVE):
             self._start_session()
 
@@ -498,7 +609,6 @@ class SmartPlugTrackerController:
         now = datetime.now()
         duration_s = (now - self._session_start_time).total_seconds()
 
-        # Check minimum duration
         if duration_s < self._min_duration_s:
             _LOGGER.debug(
                 "%s: Session discarded (duration %.1fs < min %ds)",
@@ -509,14 +619,12 @@ class SmartPlugTrackerController:
             self._reset_session()
             return
 
-        # Calculate energy consumption
         if self._current_energy is not None and self._session_start_energy is not None:
             energy_kwh = max(0.0, self._current_energy - self._session_start_energy)
         else:
             energy_kwh = 0.0
             _LOGGER.debug("%s: Energy sensor unavailable, session energy set to 0", self._device_name)
 
-        # Update statistics
         self._sessions_total += 1
         self._sessions_today += 1
         self._energy_today_kwh += energy_kwh
@@ -559,3 +667,7 @@ class SmartPlugTrackerController:
                 callback_fn()
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Error notifying entity listener")
+
+    async def async_can_turn_on(self) -> bool:
+        """Check if the switch can be turned on (respects schedule)."""
+        return not self._schedule_blocked

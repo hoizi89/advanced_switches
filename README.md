@@ -1,6 +1,6 @@
-# Smart Plug Tracker
+# Advanced Switches
 
-Home Assistant Integration zur Erstellung virtueller Geräte aus Smart-Steckdosen mit Energiemessung.
+Home Assistant Integration zur Erstellung virtueller Geräte aus Smart-Steckdosen mit Energiemessung und Zeitsteuerung.
 
 ## Features
 
@@ -10,6 +10,7 @@ Home Assistant Integration zur Erstellung virtueller Geräte aus Smart-Steckdose
 - **Zwei Betriebsmodi**:
   - **Simple Mode**: OFF/ACTIVE (z.B. Luftkompressor)
   - **Standby Mode**: OFF/STANDBY/ACTIVE (z.B. Sauna, Waschmaschine)
+- **Zeitsteuerung**: Geräte nur zu bestimmten Zeiten erlauben (z.B. Kompressor nur tagsüber)
 - **Mehrere Instanzen**: Beliebig viele Geräte parallel
 
 ## Voraussetzungen
@@ -25,23 +26,24 @@ Eine Smart-Steckdose mit:
 
 1. HACS öffnen
 2. "Integrationen" → "Custom Repositories"
-3. URL hinzufügen: `https://github.com/hoizi89/smart_plug_tracker`
+3. URL hinzufügen: `https://github.com/hoizi89/advanced_switches`
 4. Integration installieren
 5. Home Assistant neu starten
 
 ### Manuell
 
-1. `custom_components/smart_plug_tracker` nach `config/custom_components/` kopieren
+1. `custom_components/advanced_switches` nach `config/custom_components/` kopieren
 2. Home Assistant neu starten
 
 ## Konfiguration
 
 1. Einstellungen → Geräte & Dienste → Integration hinzufügen
-2. "Smart Plug Tracker" suchen
+2. "Advanced Switches" suchen
 3. Gerät konfigurieren:
    - **Name**: z.B. "Sauna", "Kompressor", "Waschmaschine"
    - **Switch/Power/Energy Entities**: Auswählen
    - **Modus**: Simple oder Standby
+   - **Zeitsteuerung**: Optional aktivieren
 
 ### Simple Mode (Kompressor, etc.)
 
@@ -63,14 +65,35 @@ Eine Smart-Steckdose mit:
 | `session_end_grace_s` | 120 | Grace Period gegen Taktung |
 | `min_session_s` | 60 | Mindestdauer für Session |
 
+### Zeitsteuerung (Optional)
+
+| Parameter | Default | Beschreibung |
+|-----------|---------|--------------|
+| `schedule_enabled` | false | Zeitsteuerung aktivieren |
+| `schedule_start` | 06:00 | Startzeit (erlaubt ab) |
+| `schedule_end` | 22:00 | Endzeit (erlaubt bis) |
+| `schedule_days` | Mo-So | Erlaubte Wochentage |
+
+**Beispiel Kompressor nur tagsüber:**
+- `schedule_enabled`: true
+- `schedule_start`: 07:00
+- `schedule_end`: 20:00
+- `schedule_days`: Mo-Fr
+
+Außerhalb der erlaubten Zeiten:
+- Schalter wird automatisch ausgeschaltet
+- Einschalten ist blockiert
+- Status zeigt "blocked"
+
 ## Erzeugte Entities
 
 | Entity | Beschreibung |
 |--------|--------------|
 | `switch.<name>_power` | Proxy zur Steckdose |
-| `sensor.<name>_state` | off/standby/active |
+| `sensor.<name>_state` | off/standby/active/blocked |
 | `binary_sensor.<name>_active` | True bei active |
 | `binary_sensor.<name>_on` | True bei standby/active (nur Standby Mode) |
+| `binary_sensor.<name>_schedule_blocked` | True wenn durch Zeitplan blockiert |
 | `sensor.<name>_sessions_total` | Gesamt-Zähler |
 | `sensor.<name>_sessions_today` | Sessions heute |
 | `sensor.<name>_last_session_duration` | Letzte Dauer |
@@ -95,12 +118,15 @@ session_end_grace_s: 300   # 5 Min für Pausenphasen
 min_session_s: 60
 ```
 
-### Kompressor (Simple Mode)
+### Kompressor mit Nachtruhe (Simple Mode)
 ```
 active_threshold_w: 50
 on_delay_s: 3
 off_delay_s: 5
 min_active_s: 10
+schedule_enabled: true
+schedule_start: 07:00
+schedule_end: 20:00
 ```
 
 ## Benachrichtigungen
