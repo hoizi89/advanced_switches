@@ -1063,6 +1063,30 @@ class AdvancedSwitchController:
             self._today_date = today
             self._notify_entities()
 
+    def reset_all_counters(self) -> None:
+        """Reset all session counters to zero."""
+        _LOGGER.info("%s: Resetting all counters", self._device_name)
+        self._sessions_total = 0
+        self._sessions_today = 0
+        self._energy_today_kwh = 0.0
+        self._energy_total_kwh = 0.0
+        self._last_session_duration_s = None
+        self._last_session_energy_kwh = None
+        self._last_session_peak_power_w = None
+        self._session_history.clear()
+        self._avg_session_duration_s = None
+        self._avg_session_energy_kwh = None
+        self._today_date = date.today()
+        self._notify_entities()
+
+    def reset_today_counters(self) -> None:
+        """Reset only today's counters."""
+        _LOGGER.info("%s: Resetting today's counters", self._device_name)
+        self._sessions_today = 0
+        self._energy_today_kwh = 0.0
+        self._today_date = date.today()
+        self._notify_entities()
+
     def _notify_entities(self) -> None:
         """Notify all registered entities of updates."""
         for callback_fn in self._entity_listeners:

@@ -2,7 +2,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "advanced_switches"
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
 
 # Config keys
 CONF_DEVICE_NAME = "device_name"

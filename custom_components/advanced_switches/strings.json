@@ -195,6 +195,14 @@
       "schedule_turned_off": {
         "name": "Turned Off By Schedule"
       }
+    },
+    "button": {
+      "reset_all_counters": {
+        "name": "Reset All Counters"
+      },
+      "reset_today_counters": {
+        "name": "Reset Today Counters"
+      }
     }
   }
 }
