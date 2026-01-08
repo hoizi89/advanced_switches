@@ -674,7 +674,14 @@ class AdvancedSwitchController:
                 async_track_time_change(self.hass, schedule_check, second=0)
             )
 
-        _LOGGER.info("Advanced Switches started for %s", self._device_name)
+        _LOGGER.info(
+            "%s: Started (mode=%s, standby=%.2fW, active=%.2fW, smoothing=%ds)",
+            self._device_name,
+            self._mode,
+            self._standby_threshold_w,
+            self._active_threshold_w,
+            self._power_smoothing_s,
+        )
 
     async def async_stop(self) -> None:
         """Stop the controller."""
@@ -763,6 +770,15 @@ class AdvancedSwitchController:
 
     async def _handle_standby_mode(self, power: float, initial: bool = False) -> None:
         """Handle power changes in standby mode (OFF/STANDBY/ACTIVE)."""
+        _LOGGER.debug(
+            "%s: State=%s, Power=%.2f (raw=%.2f), Thresholds: standby=%.2f, active=%.2f",
+            self._device_name,
+            self._state,
+            power,
+            self._current_power,
+            self._standby_threshold_w,
+            self._active_threshold_w,
+        )
         if self._state == STATE_OFF:
             if power >= self._active_threshold_w:
                 if initial:
@@ -931,11 +947,13 @@ class AdvancedSwitchController:
             self._start_session()
 
         self._state = new_state
-        _LOGGER.debug(
-            "%s: State transition %s -> %s",
+        _LOGGER.info(
+            "%s: State transition %s -> %s (power=%.2f, smoothing=%ds)",
             self._device_name,
             old_state,
             new_state,
+            self._current_power,
+            self._power_smoothing_s,
         )
         self._notify_entities()
 
