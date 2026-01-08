@@ -29,6 +29,27 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def format_duration(seconds: int | float | None) -> str:
+    """Format seconds as human-readable duration (e.g., '1h 15m 30s')."""
+    if seconds is None or seconds < 0:
+        return ""
+
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    if secs > 0 or not parts:
+        parts.append(f"{secs}s")
+
+    return " ".join(parts)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -248,6 +269,11 @@ class LastSessionDurationSensor(BaseEntity):
         """Return the last session duration in seconds."""
         return self._ctrl.last_session_duration_s
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return formatted duration."""
+        return {"formatted": format_duration(self._ctrl.last_session_duration_s)}
+
 
 class LastSessionEnergySensor(BaseEntity):
     """Sensor showing last session energy consumption."""
@@ -369,6 +395,11 @@ class CurrentSessionDurationSensor(BaseEntity):
         return self._ctrl.current_session_duration_s
 
     @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return formatted duration."""
+        return {"formatted": format_duration(self._ctrl.current_session_duration_s)}
+
+    @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
@@ -462,8 +493,11 @@ class AvgSessionDurationSensor(BaseEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return session history as attributes."""
-        return {"session_history": self._ctrl.session_history}
+        """Return session history and formatted duration as attributes."""
+        return {
+            "formatted": format_duration(self._ctrl.avg_session_duration_s),
+            "session_history": self._ctrl.session_history,
+        }
 
 
 class AvgSessionEnergySensor(BaseEntity):
