@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.event import async_call_later, async_track_time_change
+from homeassistant.helpers.event import async_call_later, async_track_time_change, async_track_time_interval
 
 from .const import (
     ATTR_AVG_SESSION_DURATION_S,
@@ -672,6 +672,21 @@ class AdvancedSwitchController:
 
             self._remove_listeners.append(
                 async_track_time_change(self.hass, schedule_check, second=0)
+            )
+
+        # Register periodic power sampling for smoothing (every 5 seconds)
+        if self._power_smoothing_s > 0:
+            @callback
+            def power_sampling(_: datetime) -> None:
+                """Sample current power for smoothing buffer."""
+                if self._current_power is not None:
+                    self._add_power_reading(self._current_power)
+                    self._notify_entities()
+
+            self._remove_listeners.append(
+                async_track_time_interval(
+                    self.hass, power_sampling, timedelta(seconds=5)
+                )
             )
 
         _LOGGER.info(
