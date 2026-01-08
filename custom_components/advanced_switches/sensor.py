@@ -595,11 +595,11 @@ class AutoOffRemainingSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_auto_off_remaining"
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> str:
         """Return remaining time as human-readable string."""
         auto_off_at = self._ctrl.auto_off_at
         if auto_off_at is None:
-            return None
+            return "Inaktiv"
 
         from datetime import datetime
         now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
@@ -623,19 +623,26 @@ class AutoOffRemainingSensor(BaseEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional info."""
+        attrs = {
+            "configured_minutes": self._ctrl.auto_off_minutes,
+        }
+
         auto_off_at = self._ctrl.auto_off_at
         if auto_off_at is None:
-            return {"remaining_minutes": None, "auto_off_at": None}
+            attrs["remaining_minutes"] = None
+            attrs["auto_off_at"] = None
+            attrs["status"] = "Timer startet wenn Schalter eingeschaltet wird"
+            return attrs
 
         from datetime import datetime
         now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
         remaining = auto_off_at - now
         total_minutes = max(0, int(remaining.total_seconds() / 60))
 
-        return {
-            "remaining_minutes": total_minutes,
-            "auto_off_at": auto_off_at.isoformat(),
-        }
+        attrs["remaining_minutes"] = total_minutes
+        attrs["auto_off_at"] = auto_off_at.isoformat()
+        attrs["status"] = "Timer läuft"
+        return attrs
 
 
 class SmoothedPowerSensor(BaseEntity):
