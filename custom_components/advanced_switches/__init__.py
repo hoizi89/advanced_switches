@@ -732,7 +732,6 @@ class AdvancedSwitchController:
 
         elif entity_id == self._switch_entity:
             # Handle auto-off timer based on physical switch state
-            _LOGGER.debug("%s: Switch state changed to %s", self._device_name, new_state.state)
             if new_state.state == "on":
                 self._start_auto_off_timer()
             else:
@@ -770,15 +769,6 @@ class AdvancedSwitchController:
 
     async def _handle_standby_mode(self, power: float, initial: bool = False) -> None:
         """Handle power changes in standby mode (OFF/STANDBY/ACTIVE)."""
-        _LOGGER.debug(
-            "%s: State=%s, Power=%.2f (raw=%.2f), Thresholds: standby=%.2f, active=%.2f",
-            self._device_name,
-            self._state,
-            power,
-            self._current_power,
-            self._standby_threshold_w,
-            self._active_threshold_w,
-        )
         if self._state == STATE_OFF:
             if power >= self._active_threshold_w:
                 if initial:
@@ -869,11 +859,6 @@ class AdvancedSwitchController:
             self._end_session()
 
         self._pending_off_timer = async_call_later(self.hass, delay, off_timer_callback)
-        _LOGGER.debug(
-            "%s: Grace timer started (%ds), ignoring small fluctuations",
-            self._device_name,
-            delay,
-        )
 
     def _cancel_off_timer(self) -> None:
         """Cancel pending off timer."""
@@ -881,15 +866,10 @@ class AdvancedSwitchController:
             self._pending_off_timer()
             self._pending_off_timer = None
             self._pending_session_end = False
-            _LOGGER.debug("%s: Grace timer cancelled, activity resumed", self._device_name)
 
     def _start_auto_off_timer(self) -> None:
         """Start auto-off timer."""
-        if not self._auto_off_enabled:
-            _LOGGER.debug("%s: Auto-off not enabled, skipping timer", self._device_name)
-            return
-        if self._auto_off_timer is not None:
-            _LOGGER.debug("%s: Auto-off timer already running", self._device_name)
+        if not self._auto_off_enabled or self._auto_off_timer is not None:
             return
 
         # Calculate when auto-off will trigger
