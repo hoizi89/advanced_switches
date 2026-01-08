@@ -78,9 +78,10 @@ async def async_setup_entry(
         SmoothedPowerSensor(controller, entry),
     ]
 
-    # Add auto-off timestamp sensor if auto-off is enabled
+    # Add auto-off sensors if auto-off is enabled
     if controller.auto_off_enabled:
         entities.append(AutoOffAtSensor(controller, entry))
+        entities.append(AutoOffRemainingSensor(controller, entry))
 
     async_add_entities(entities)
 
@@ -545,6 +546,96 @@ class AutoOffAtSensor(BaseEntity):
     def native_value(self):
         """Return when auto-off will trigger."""
         return self._ctrl.auto_off_at
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return remaining time as attribute."""
+        auto_off_at = self._ctrl.auto_off_at
+        if auto_off_at is None:
+            return {"remaining": None, "remaining_minutes": None}
+
+        from datetime import datetime
+        now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
+        remaining = auto_off_at - now
+
+        if remaining.total_seconds() <= 0:
+            return {"remaining": "0s", "remaining_minutes": 0}
+
+        total_minutes = int(remaining.total_seconds() / 60)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+
+        if hours > 0:
+            formatted = f"in {hours}h {minutes}min"
+        elif minutes > 0:
+            formatted = f"in {minutes} min"
+        else:
+            secs = int(remaining.total_seconds())
+            formatted = f"in {secs}s"
+
+        return {
+            "remaining": formatted,
+            "remaining_minutes": total_minutes,
+        }
+
+
+class AutoOffRemainingSensor(BaseEntity):
+    """Sensor showing remaining time until auto-off as countdown."""
+
+    _attr_translation_key = "auto_off_remaining"
+    _attr_icon = "mdi:timer-sand"
+
+    def __init__(
+        self,
+        controller: AdvancedSwitchController,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(controller, entry)
+        self._attr_unique_id = f"{entry.entry_id}_auto_off_remaining"
+
+    @property
+    def native_value(self) -> str | None:
+        """Return remaining time as human-readable string."""
+        auto_off_at = self._ctrl.auto_off_at
+        if auto_off_at is None:
+            return None
+
+        from datetime import datetime
+        now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
+        remaining = auto_off_at - now
+
+        if remaining.total_seconds() <= 0:
+            return "0s"
+
+        total_minutes = int(remaining.total_seconds() / 60)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+
+        if hours > 0:
+            return f"in {hours}h {minutes}min"
+        elif minutes > 0:
+            return f"in {minutes} min"
+        else:
+            secs = int(remaining.total_seconds())
+            return f"in {secs}s"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional info."""
+        auto_off_at = self._ctrl.auto_off_at
+        if auto_off_at is None:
+            return {"remaining_minutes": None, "auto_off_at": None}
+
+        from datetime import datetime
+        now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
+        remaining = auto_off_at - now
+        total_minutes = max(0, int(remaining.total_seconds() / 60))
+
+        return {
+            "remaining_minutes": total_minutes,
+            "auto_off_at": auto_off_at.isoformat(),
+        }
 
 
 class SmoothedPowerSensor(BaseEntity):

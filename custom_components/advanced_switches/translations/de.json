@@ -190,6 +190,9 @@
       "auto_off_at": {
         "name": "Auto-Aus um"
       },
+      "auto_off_remaining": {
+        "name": "Auto-Aus in"
+      },
       "smoothed_power": {
         "name": "Geglättete Leistung"
       }

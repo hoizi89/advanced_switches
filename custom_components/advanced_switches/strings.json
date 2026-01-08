@@ -190,6 +190,9 @@
       "auto_off_at": {
         "name": "Auto Off At"
       },
+      "auto_off_remaining": {
+        "name": "Auto Off Remaining"
+      },
       "smoothed_power": {
         "name": "Smoothed Power"
       }
