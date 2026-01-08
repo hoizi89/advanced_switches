@@ -746,7 +746,13 @@ class AdvancedSwitchController:
                 _LOGGER.debug("Invalid energy value: %s", new_state.state)
 
         elif entity_id == self._switch_entity:
-            # Handle auto-off timer based on physical switch state
+            # Handle auto-off timer based on switch state (UI or physical)
+            _LOGGER.debug(
+                "%s: Switch state changed to '%s', auto_off_enabled=%s",
+                self._device_name,
+                new_state.state,
+                self._auto_off_enabled,
+            )
             if new_state.state == "on":
                 self._start_auto_off_timer()
             else:
@@ -884,7 +890,11 @@ class AdvancedSwitchController:
 
     def _start_auto_off_timer(self) -> None:
         """Start auto-off timer."""
-        if not self._auto_off_enabled or self._auto_off_timer is not None:
+        if not self._auto_off_enabled:
+            _LOGGER.debug("%s: Auto-off not enabled, skipping timer", self._device_name)
+            return
+        if self._auto_off_timer is not None:
+            _LOGGER.debug("%s: Auto-off timer already running", self._device_name)
             return
 
         # Calculate when auto-off will trigger

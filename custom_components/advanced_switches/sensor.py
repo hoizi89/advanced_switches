@@ -584,6 +584,7 @@ class AutoOffRemainingSensor(BaseEntity):
 
     _attr_translation_key = "auto_off_remaining"
     _attr_icon = "mdi:timer-sand"
+    _attr_should_poll = True  # Enable polling for countdown updates
 
     def __init__(
         self,
@@ -593,6 +594,11 @@ class AutoOffRemainingSensor(BaseEntity):
         """Initialize the sensor."""
         super().__init__(controller, entry)
         self._attr_unique_id = f"{entry.entry_id}_auto_off_remaining"
+
+    @property
+    def suggested_object_id(self) -> str:
+        """Return suggested object ID."""
+        return f"{self._ctrl.device_name}_auto_off_remaining".lower().replace(" ", "_")
 
     @property
     def native_value(self) -> str:
