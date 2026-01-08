@@ -72,7 +72,8 @@
           "thresholds": "Schwellwerte",
           "timing": "Timing / Verzögerungen",
           "schedule": "Zeitsteuerung",
-          "auto_off": "Auto-Abschaltung"
+          "auto_off": "Auto-Abschaltung",
+          "reset": "Zähler zurücksetzen"
         }
       },
       "thresholds": {
@@ -124,6 +125,17 @@
         },
         "data_description": {
           "auto_off_minutes": "Switch wird X Minuten nach dem Einschalten automatisch ausgeschaltet"
+        }
+      },
+      "reset": {
+        "title": "Zähler zurücksetzen",
+        "description": "Auswählen was zurückgesetzt werden soll und Absenden drücken.",
+        "data": {
+          "reset_all": "ALLES zurücksetzen",
+          "reset_today": "Heutige Zähler (Sessions heute, Energie heute)",
+          "reset_total": "Gesamt-Zähler (Sessions gesamt, Energie gesamt)",
+          "reset_last_session": "Letzte Session (Dauer, Energie, Peak)",
+          "reset_history": "Session-Verlauf & Durchschnitte"
         }
       }
     }
