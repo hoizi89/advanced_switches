@@ -346,32 +346,41 @@ class AdvancedSwitchController:
         return self._calculate_smoothed_power()
 
     def _calculate_smoothed_power(self) -> float:
-        """Calculate moving average of power readings."""
+        """Calculate simple moving average (SMA) of power readings.
+
+        Uses time-based window and periodic sampling for stable values.
+        With 2-second sampling and 60-second window, we get ~30 readings.
+        """
         if not self._power_readings:
             return self._current_power
 
         now = datetime.now()
         cutoff = now - timedelta(seconds=self._power_smoothing_s)
 
-        # Remove old readings
-        while self._power_readings and self._power_readings[0][0] < cutoff:
-            self._power_readings.popleft()
+        # Get readings within time window
+        valid_readings = [p for t, p in self._power_readings if t >= cutoff]
 
-        if not self._power_readings:
+        # Need minimum readings for stability (at least 5 readings)
+        if len(valid_readings) < 5:
+            # Use last N readings from buffer
+            all_readings = [p for _, p in self._power_readings]
+            valid_readings = all_readings[-max(5, len(all_readings)):]
+
+        if not valid_readings:
             return self._current_power
 
-        # Calculate average
-        total = sum(reading[1] for reading in self._power_readings)
-        return round(total / len(self._power_readings), 2)
+        # Simple moving average
+        avg = sum(valid_readings) / len(valid_readings)
+        return round(avg, 1)
 
     def _add_power_reading(self, power: float) -> None:
         """Add a new power reading to the buffer."""
         now = datetime.now()
         self._power_readings.append((now, power))
 
-        # Clean up old readings
-        cutoff = now - timedelta(seconds=self._power_smoothing_s)
-        while self._power_readings and self._power_readings[0][0] < cutoff:
+        # Keep enough readings for smoothing (at least 60 readings = 2 min at 2s interval)
+        max_readings = max(120, int(self._power_smoothing_s) + 30)
+        while len(self._power_readings) > max_readings:
             self._power_readings.popleft()
 
     @property
@@ -681,7 +690,8 @@ class AdvancedSwitchController:
                 async_track_time_change(self.hass, schedule_check, second=0)
             )
 
-        # Register periodic power sampling for smoothing (every 5 seconds)
+        # Register periodic power sampling for smoothing (every 2 seconds)
+        # This ensures stable values even when sensor doesn't update frequently
         if self._power_smoothing_s > 0:
             @callback
             def power_sampling(_: datetime) -> None:
@@ -692,7 +702,7 @@ class AdvancedSwitchController:
 
             self._remove_listeners.append(
                 async_track_time_interval(
-                    self.hass, power_sampling, timedelta(seconds=5)
+                    self.hass, power_sampling, timedelta(seconds=2)
                 )
             )
 
