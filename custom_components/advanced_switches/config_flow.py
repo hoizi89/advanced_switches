@@ -693,9 +693,20 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                 if user_input.get("reset_all"):
                     ctrl.reset_all_counters()
                     _LOGGER.info("All counters reset via options flow")
-                elif user_input.get("reset_today"):
-                    ctrl.reset_today_counters()
-                    _LOGGER.info("Today's counters reset via options flow")
+                else:
+                    # Individual resets
+                    if user_input.get("reset_today"):
+                        ctrl.reset_today_counters()
+                        _LOGGER.info("Today's counters reset via options flow")
+                    if user_input.get("reset_total"):
+                        ctrl.reset_total_counters()
+                        _LOGGER.info("Total counters reset via options flow")
+                    if user_input.get("reset_last_session"):
+                        ctrl.reset_last_session()
+                        _LOGGER.info("Last session reset via options flow")
+                    if user_input.get("reset_history"):
+                        ctrl.reset_session_history()
+                        _LOGGER.info("Session history reset via options flow")
             return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
@@ -706,6 +717,15 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                         selector.BooleanSelectorConfig()
                     ),
                     vol.Optional("reset_today", default=False): selector.BooleanSelector(
+                        selector.BooleanSelectorConfig()
+                    ),
+                    vol.Optional("reset_total", default=False): selector.BooleanSelector(
+                        selector.BooleanSelectorConfig()
+                    ),
+                    vol.Optional("reset_last_session", default=False): selector.BooleanSelector(
+                        selector.BooleanSelectorConfig()
+                    ),
+                    vol.Optional("reset_history", default=False): selector.BooleanSelector(
                         selector.BooleanSelectorConfig()
                     ),
                 }

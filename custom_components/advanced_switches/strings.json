@@ -129,10 +129,13 @@
       },
       "reset": {
         "title": "Reset Counters",
-        "description": "Reset session counters and energy statistics. Select what to reset and press Submit.",
+        "description": "Select what to reset and press Submit.",
         "data": {
-          "reset_all": "Reset ALL counters (total sessions, energy, history)",
-          "reset_today": "Reset only TODAY's counters"
+          "reset_all": "Reset EVERYTHING",
+          "reset_today": "Today's counters (sessions today, energy today)",
+          "reset_total": "Total counters (sessions total, energy total)",
+          "reset_last_session": "Last session data (duration, energy, peak)",
+          "reset_history": "Session history & averages"
         }
       }
     }
