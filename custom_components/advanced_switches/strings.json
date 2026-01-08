@@ -72,7 +72,8 @@
           "thresholds": "Thresholds",
           "timing": "Timing / Delays",
           "schedule": "Schedule",
-          "auto_off": "Auto-Off Timer"
+          "auto_off": "Auto-Off Timer",
+          "reset": "Reset Counters"
         }
       },
       "thresholds": {
@@ -124,6 +125,14 @@
         },
         "data_description": {
           "auto_off_minutes": "Switch will be turned off X minutes after being turned on"
+        }
+      },
+      "reset": {
+        "title": "Reset Counters",
+        "description": "Reset session counters and energy statistics. Select what to reset and press Submit.",
+        "data": {
+          "reset_all": "Reset ALL counters (total sessions, energy, history)",
+          "reset_today": "Reset only TODAY's counters"
         }
       }
     }
@@ -194,14 +203,6 @@
       },
       "schedule_turned_off": {
         "name": "Turned Off By Schedule"
-      }
-    },
-    "button": {
-      "reset_all_counters": {
-        "name": "Reset All Counters"
-      },
-      "reset_today_counters": {
-        "name": "Reset Today Counters"
       }
     }
   }

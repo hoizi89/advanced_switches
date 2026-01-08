@@ -384,7 +384,7 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
         """Manage the options - show menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["thresholds", "timing", "schedule", "auto_off"],
+            menu_options=["thresholds", "timing", "schedule", "auto_off", "reset"],
         )
 
     async def async_step_thresholds(
@@ -677,6 +677,36 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                             unit_of_measurement="min",
                             mode=selector.NumberSelectorMode.BOX,
                         )
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_reset(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reset counters."""
+        if user_input is not None:
+            # Get controller and reset counters
+            ctrl = self.hass.data[DOMAIN].get(self._config_entry.entry_id)
+            if ctrl:
+                if user_input.get("reset_all"):
+                    ctrl.reset_all_counters()
+                    _LOGGER.info("All counters reset via options flow")
+                elif user_input.get("reset_today"):
+                    ctrl.reset_today_counters()
+                    _LOGGER.info("Today's counters reset via options flow")
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="reset",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("reset_all", default=False): selector.BooleanSelector(
+                        selector.BooleanSelectorConfig()
+                    ),
+                    vol.Optional("reset_today", default=False): selector.BooleanSelector(
+                        selector.BooleanSelectorConfig()
                     ),
                 }
             ),
