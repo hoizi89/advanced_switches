@@ -145,10 +145,11 @@ class StateSensor(BaseEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return diagnostic attributes."""
         attrs = {
-            "current_power_w": self._ctrl.current_power,
+            "current_power_w": round(self._ctrl.current_power, 2),
+            "smoothed_power_w": round(self._ctrl.smoothed_power, 2),
             "mode": self._ctrl.mode,
-            "standby_threshold_w": self._ctrl._standby_threshold_w,
-            "active_threshold_w": self._ctrl._active_threshold_w,
+            "standby_threshold_w": round(self._ctrl._standby_threshold_w, 2),
+            "active_threshold_w": round(self._ctrl._active_threshold_w, 2),
             "pending_session_end": self._ctrl._pending_session_end,
         }
 
@@ -534,4 +535,4 @@ class SmoothedPowerSensor(BaseEntity):
     @property
     def native_value(self) -> float:
         """Return the smoothed power value."""
-        return self._ctrl.smoothed_power
+        return round(self._ctrl.smoothed_power, 2)
