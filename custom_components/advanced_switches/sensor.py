@@ -252,8 +252,6 @@ class LastSessionDurationSensor(BaseEntity):
     """Sensor showing last session duration."""
 
     _attr_translation_key = "last_session_duration"
-    _attr_device_class = SensorDeviceClass.DURATION
-    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_icon = "mdi:timer-outline"
 
     def __init__(
@@ -266,14 +264,16 @@ class LastSessionDurationSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_last_session_duration"
 
     @property
-    def native_value(self) -> int | None:
-        """Return the last session duration in seconds."""
-        return self._ctrl.last_session_duration_s
+    def native_value(self) -> str | None:
+        """Return the last session duration formatted."""
+        if self._ctrl.last_session_duration_s is None:
+            return None
+        return format_duration(self._ctrl.last_session_duration_s)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return formatted duration."""
-        return {"formatted": format_duration(self._ctrl.last_session_duration_s)}
+        """Return raw seconds as attribute."""
+        return {"seconds": self._ctrl.last_session_duration_s}
 
 
 class LastSessionEnergySensor(BaseEntity):
@@ -376,8 +376,6 @@ class CurrentSessionDurationSensor(BaseEntity):
     """Sensor showing current session duration (live)."""
 
     _attr_translation_key = "current_session_duration"
-    _attr_device_class = SensorDeviceClass.DURATION
-    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_icon = "mdi:timer-play"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -391,14 +389,16 @@ class CurrentSessionDurationSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_current_session_duration"
 
     @property
-    def native_value(self) -> int | None:
-        """Return the current session duration in seconds."""
-        return self._ctrl.current_session_duration_s
+    def native_value(self) -> str | None:
+        """Return the current session duration formatted."""
+        if self._ctrl.current_session_duration_s is None:
+            return None
+        return format_duration(self._ctrl.current_session_duration_s)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return formatted duration."""
-        return {"formatted": format_duration(self._ctrl.current_session_duration_s)}
+        """Return raw seconds as attribute."""
+        return {"seconds": self._ctrl.current_session_duration_s}
 
     @property
     def available(self) -> bool:
@@ -473,8 +473,6 @@ class AvgSessionDurationSensor(BaseEntity):
     """Sensor showing average session duration."""
 
     _attr_translation_key = "avg_session_duration"
-    _attr_device_class = SensorDeviceClass.DURATION
-    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_icon = "mdi:timer-sand"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -488,15 +486,17 @@ class AvgSessionDurationSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_avg_session_duration"
 
     @property
-    def native_value(self) -> float | None:
-        """Return the average session duration."""
-        return self._ctrl.avg_session_duration_s
+    def native_value(self) -> str | None:
+        """Return the average session duration formatted."""
+        if self._ctrl.avg_session_duration_s is None:
+            return None
+        return format_duration(self._ctrl.avg_session_duration_s)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return session history and formatted duration as attributes."""
+        """Return raw seconds and session history as attributes."""
         return {
-            "formatted": format_duration(self._ctrl.avg_session_duration_s),
+            "seconds": self._ctrl.avg_session_duration_s,
             "session_history": self._ctrl.session_history,
         }
 
