@@ -47,7 +47,7 @@
           "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies werden ignoriert",
           "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)",
-          "session_end_on_standby": "AN: Session endet bei ACTIVE→STANDBY (Waschmaschine). AUS: Session läuft weiter bis OFF (Sauna)"
+          "session_end_on_standby": "AN: Session endet wenn Geraet in STANDBY geht. AUS: Session laeuft durch STANDBY-Phasen weiter bis Geraet AUS"
         }
       },
       "schedule": {
@@ -107,7 +107,7 @@
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies ignorieren",
           "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)",
-          "session_end_on_standby": "AN: Waschmaschine-Modus. AUS: Sauna-Modus"
+          "session_end_on_standby": "AN: Jede Aktiv-Phase ist eigene Session. AUS: Session laeuft durch Standby weiter"
         }
       },
       "schedule": {

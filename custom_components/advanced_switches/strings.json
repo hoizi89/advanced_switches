@@ -47,7 +47,7 @@
           "session_end_grace_s": "Delay for STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions shorter than this are ignored",
           "power_smoothing_s": "Average over X seconds (0 = disabled)",
-          "session_end_on_standby": "ON: Session ends when ACTIVE→STANDBY (washing machine). OFF: Session continues until OFF (sauna)"
+          "session_end_on_standby": "ON: Session ends when device goes to STANDBY. OFF: Session continues through STANDBY phases until device turns OFF"
         }
       },
       "schedule": {
@@ -107,7 +107,7 @@
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions shorter than this ignored",
           "power_smoothing_s": "Average over X seconds (0 = disabled)",
-          "session_end_on_standby": "ON: Washing machine mode. OFF: Sauna mode"
+          "session_end_on_standby": "ON: Each active phase is a separate session. OFF: Session continues through standby"
         }
       },
       "schedule": {
