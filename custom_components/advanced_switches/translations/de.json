@@ -36,7 +36,8 @@
           "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)",
-          "power_smoothing_s": "Leistungsglättung (s)"
+          "power_smoothing_s": "Leistungsglättung (s)",
+          "session_end_on_standby": "Session bei STANDBY beenden"
         },
         "data_description": {
           "standby_threshold_w": "OFF → STANDBY wenn Power darüber",
@@ -45,7 +46,8 @@
           "active_standby_delay_s": "Verzögerung für ACTIVE ↔ STANDBY",
           "session_end_grace_s": "Verzögerung für STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies werden ignoriert",
-          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
+          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)",
+          "session_end_on_standby": "AN: Session endet bei ACTIVE→STANDBY (Waschmaschine). AUS: Session läuft weiter bis OFF (Sauna)"
         }
       },
       "schedule": {
@@ -94,7 +96,8 @@
           "active_standby_delay_s": "Aktiv/Standby Wechsel (s)",
           "session_end_grace_s": "Session-Ende Toleranz (s)",
           "min_session_s": "Mindest-Sessiondauer (s)",
-          "power_smoothing_s": "Leistungsglättung (s)"
+          "power_smoothing_s": "Leistungsglättung (s)",
+          "session_end_on_standby": "Session bei STANDBY beenden"
         },
         "data_description": {
           "on_delay_s": "OFF → STANDBY/ACTIVE",
@@ -103,7 +106,8 @@
           "active_standby_delay_s": "ACTIVE ↔ STANDBY",
           "session_end_grace_s": "STANDBY/ACTIVE → OFF",
           "min_session_s": "Sessions kürzer als dies ignorieren",
-          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)"
+          "power_smoothing_s": "Durchschnitt über X Sekunden (0 = deaktiviert)",
+          "session_end_on_standby": "AN: Waschmaschine-Modus. AUS: Sauna-Modus"
         }
       },
       "schedule": {
@@ -186,9 +190,6 @@
       },
       "avg_session_energy": {
         "name": "Ø Session Energie"
-      },
-      "auto_off_at": {
-        "name": "Auto-Aus um"
       },
       "auto_off_remaining": {
         "name": "Auto-Aus in"

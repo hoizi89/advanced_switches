@@ -46,6 +46,7 @@ from .const import (
     CONF_SCHEDULE_END,
     CONF_SCHEDULE_START,
     CONF_SESSION_END_GRACE_S,
+    CONF_SESSION_END_ON_STANDBY,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
     DEFAULT_ACTIVE_STANDBY_DELAY_S,
@@ -63,6 +64,7 @@ from .const import (
     DEFAULT_SCHEDULE_END,
     DEFAULT_SCHEDULE_START,
     DEFAULT_SESSION_END_GRACE_S,
+    DEFAULT_SESSION_END_ON_STANDBY,
     DEFAULT_STANDBY_THRESHOLD_W,
     DOMAIN,
     MODE_SIMPLE,
@@ -165,6 +167,7 @@ class AdvancedSwitchController:
             self._standby_threshold_w: float = 0
             self._session_end_grace_s: int = self._off_delay_s
             self._active_standby_delay_s: int = self._on_delay_s  # Not used in simple mode
+            self._session_end_on_standby: bool = False  # Not used in simple mode
         else:  # Standby mode
             self._standby_threshold_w: float = entry.data.get(
                 CONF_STANDBY_THRESHOLD_W, DEFAULT_STANDBY_THRESHOLD_W
@@ -181,6 +184,9 @@ class AdvancedSwitchController:
                 CONF_SESSION_END_GRACE_S, DEFAULT_SESSION_END_GRACE_S
             )
             self._min_duration_s: int = entry.data.get(CONF_MIN_SESSION_S, DEFAULT_MIN_SESSION_S)
+            self._session_end_on_standby: bool = entry.data.get(
+                CONF_SESSION_END_ON_STANDBY, DEFAULT_SESSION_END_ON_STANDBY
+            )
 
         # Power smoothing - store (timestamp, power) tuples
         self._power_readings: deque[tuple[datetime, float]] = deque()
@@ -206,6 +212,7 @@ class AdvancedSwitchController:
         self._auto_off_timer: Any | None = None
         self._auto_off_at: datetime | None = None  # When auto-off will trigger
         self._pending_session_end: bool = False  # Ignore fluctuations during grace period
+        self._pending_standby_end_timer: Any | None = None  # For Waschmaschine mode
 
         # Persistent statistics
         self._sessions_total: int = 0
@@ -702,6 +709,7 @@ class AdvancedSwitchController:
         """Stop the controller."""
         self._cancel_on_timer()
         self._cancel_off_timer()
+        self._cancel_standby_end_timer()
         self._cancel_auto_off_timer()
 
         for remove_listener in self._remove_listeners:
@@ -823,15 +831,22 @@ class AdvancedSwitchController:
                 self._start_off_timer(use_grace=True)
                 self._cancel_on_timer()  # Cancel any pending standby transition
             elif power < self._active_threshold_w:
-                # Start timer to drop to standby (uses on_delay_s)
-                if not self._pending_session_end:
-                    self._cancel_off_timer()
-                self._start_on_timer(STATE_STANDBY)
+                # Power dropped below active but still above standby
+                if self._session_end_on_standby:
+                    # Waschmaschine mode: Session ends when ACTIVE → STANDBY
+                    # Use a timer to avoid false triggers from brief power drops
+                    self._start_standby_end_timer()
+                else:
+                    # Sauna mode: Just transition to STANDBY, keep session
+                    if not self._pending_session_end:
+                        self._cancel_off_timer()
+                    self._start_on_timer(STATE_STANDBY)
             else:
                 # Power is high - cancel any pending transitions
                 if self._pending_session_end:
                     self._cancel_off_timer()
                 self._cancel_on_timer()  # Cancel pending standby transition
+                self._cancel_standby_end_timer()  # Cancel pending session end
 
     def _start_on_timer(self, target_state: str, delay: int | None = None) -> None:
         """Start timer for state transition."""
@@ -887,6 +902,27 @@ class AdvancedSwitchController:
             self._pending_off_timer()
             self._pending_off_timer = None
             self._pending_session_end = False
+
+    def _start_standby_end_timer(self) -> None:
+        """Start timer for session end and transition to STANDBY (Waschmaschine mode)."""
+        if self._pending_standby_end_timer is not None:
+            return  # Timer already running
+
+        delay = self._active_standby_delay_s
+
+        @callback
+        def standby_end_callback(_: datetime) -> None:
+            """Handle standby end timer expiration."""
+            self._pending_standby_end_timer = None
+            self._end_session_keep_standby()
+
+        self._pending_standby_end_timer = async_call_later(self.hass, delay, standby_end_callback)
+
+    def _cancel_standby_end_timer(self) -> None:
+        """Cancel pending standby end timer."""
+        if self._pending_standby_end_timer is not None:
+            self._pending_standby_end_timer()
+            self._pending_standby_end_timer = None
 
     def _start_auto_off_timer(self) -> None:
         """Start auto-off timer."""
@@ -1050,6 +1086,72 @@ class AdvancedSwitchController:
 
         self._avg_session_duration_s = round(total_duration / count, 1)
         self._avg_session_energy_kwh = round(total_energy / count, 3)
+
+    def _end_session_keep_standby(self) -> None:
+        """End the current session but transition to STANDBY (for Waschmaschine mode)."""
+        if self._session_start_time is None:
+            # No session running, just go to standby
+            self._state = STATE_STANDBY
+            self._notify_entities()
+            return
+
+        now = datetime.now()
+        duration_s = (now - self._session_start_time).total_seconds()
+
+        if duration_s < self._min_duration_s:
+            _LOGGER.debug(
+                "%s: Session discarded (duration %.1fs < min %ds), going to standby",
+                self._device_name,
+                duration_s,
+                self._min_duration_s,
+            )
+            self._session_start_time = None
+            self._session_start_energy = None
+            self._session_peak_power = 0.0
+            self._state = STATE_STANDBY
+            self._notify_entities()
+            return
+
+        # Calculate and save session stats
+        if self._current_energy is not None and self._session_start_energy is not None:
+            energy_kwh = max(0.0, self._current_energy - self._session_start_energy)
+        else:
+            energy_kwh = 0.0
+
+        self._sessions_total += 1
+        self._sessions_today += 1
+        self._energy_today_kwh += energy_kwh
+        self._energy_total_kwh += energy_kwh
+        self._last_session_duration_s = int(duration_s)
+        self._last_session_energy_kwh = round(energy_kwh, 3)
+        self._last_session_peak_power_w = round(self._session_peak_power, 1)
+
+        # Add to session history
+        session_record = {
+            "start": self._session_start_time.isoformat(),
+            "end": now.isoformat(),
+            "duration_s": self._last_session_duration_s,
+            "energy_kwh": self._last_session_energy_kwh,
+            "peak_power_w": self._last_session_peak_power_w,
+        }
+        self._session_history.insert(0, session_record)
+        self._session_history = self._session_history[:SESSION_HISTORY_SIZE]
+        self._calculate_averages()
+
+        _LOGGER.info(
+            "%s: Session ended (going to standby) - duration: %ds, energy: %.3f kWh",
+            self._device_name,
+            self._last_session_duration_s,
+            self._last_session_energy_kwh,
+        )
+
+        # Reset session but go to STANDBY (not OFF)
+        self._session_start_time = None
+        self._session_start_energy = None
+        self._session_peak_power = 0.0
+        self._pending_session_end = False
+        self._state = STATE_STANDBY
+        self._notify_entities()
 
     def _reset_session(self) -> None:
         """Reset session state."""

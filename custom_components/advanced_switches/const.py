@@ -27,6 +27,7 @@ CONF_SESSION_END_GRACE_S = "session_end_grace_s"
 CONF_MIN_SESSION_S = "min_session_s"
 CONF_ACTIVE_STANDBY_DELAY_S = "active_standby_delay_s"
 CONF_POWER_SMOOTHING_S = "power_smoothing_s"
+CONF_SESSION_END_ON_STANDBY = "session_end_on_standby"
 
 # Schedule parameters
 CONF_SCHEDULE_ENABLED = "schedule_enabled"
@@ -51,6 +52,7 @@ DEFAULT_SESSION_END_GRACE_S = 120
 DEFAULT_MIN_SESSION_S = 60
 DEFAULT_ACTIVE_STANDBY_DELAY_S = 30
 DEFAULT_POWER_SMOOTHING_S = 0
+DEFAULT_SESSION_END_ON_STANDBY = False  # False=Sauna (Ende bei OFF), True=Waschmaschine (Ende bei STANDBY)
 
 # Defaults - Schedule
 DEFAULT_SCHEDULE_ENABLED = False

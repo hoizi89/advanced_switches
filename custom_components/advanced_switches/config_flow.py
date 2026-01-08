@@ -29,6 +29,7 @@ from .const import (
     CONF_SCHEDULE_END,
     CONF_SCHEDULE_START,
     CONF_SESSION_END_GRACE_S,
+    CONF_SESSION_END_ON_STANDBY,
     CONF_STANDBY_THRESHOLD_W,
     CONF_SWITCH_ENTITY,
     DEFAULT_ACTIVE_STANDBY_DELAY_S,
@@ -46,6 +47,7 @@ from .const import (
     DEFAULT_SCHEDULE_END,
     DEFAULT_SCHEDULE_START,
     DEFAULT_SESSION_END_GRACE_S,
+    DEFAULT_SESSION_END_ON_STANDBY,
     DEFAULT_STANDBY_THRESHOLD_W,
     DOMAIN,
     MODE_SIMPLE,
@@ -313,6 +315,10 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                             mode=selector.NumberSelectorMode.BOX,
                         )
                     ),
+                    vol.Required(
+                        CONF_SESSION_END_ON_STANDBY,
+                        default=DEFAULT_SESSION_END_ON_STANDBY,
+                    ): selector.BooleanSelector(),
                 }
             ),
         )
@@ -589,6 +595,10 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                                 mode=selector.NumberSelectorMode.BOX,
                             )
                         ),
+                        vol.Required(
+                            CONF_SESSION_END_ON_STANDBY,
+                            default=current.get(CONF_SESSION_END_ON_STANDBY, DEFAULT_SESSION_END_ON_STANDBY),
+                        ): selector.BooleanSelector(),
                     }
                 ),
             )

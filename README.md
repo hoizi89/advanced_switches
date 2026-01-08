@@ -59,6 +59,29 @@ Choose operating mode:
 | Session End Grace (s) | 120 | Prevents false session ends |
 | Min Session Duration (s) | 60 | Shorter sessions are ignored |
 | Power Smoothing (s) | 0 | Moving average (0 = off) |
+| Session End on STANDBY | off | See below |
+
+#### Session End on STANDBY
+
+Controls when a session is counted as complete:
+
+| Setting | Behavior | Use Case |
+|---------|----------|----------|
+| **OFF** (default) | Session continues during ACTIVE↔STANDBY cycling, ends only at OFF | Sauna, oven (heating cycles) |
+| **ON** | Each ACTIVE phase is a separate session | Washing machine, dishwasher |
+
+**Example - Washing Machine (ON):**
+```
+Load 1: STANDBY → ACTIVE (30min) → STANDBY = Session 1 ✓
+Load 2: STANDBY → ACTIVE (45min) → STANDBY = Session 2 ✓
+→ 2 sessions counted
+```
+
+**Example - Sauna (OFF):**
+```
+ACTIVE (heating) → STANDBY → ACTIVE → STANDBY → ... → OFF
+→ 1 session counted (entire usage)
+```
 
 ### Schedule (Optional)
 
@@ -118,8 +141,10 @@ For noisy sensors (e.g., washing machine fluctuating 0.3-3W in standby):
 - `binary_sensor.<name>_schedule_blocked`
 - `binary_sensor.<name>_schedule_turned_off`
 
+**Auto-Off:**
+- `sensor.<name>_auto_off_remaining` - countdown ("in 59 min" / "Inaktiv")
+
 **Other:**
-- `sensor.<name>_auto_off_at` - when auto-off triggers
 - `sensor.<name>_smoothed_power` - diagnostic
 
 ## Example Configs
@@ -127,13 +152,14 @@ For noisy sensors (e.g., washing machine fluctuating 0.3-3W in standby):
 **Washing Machine:**
 - Standby Threshold: 1W
 - Active Threshold: 10W
-- Session End Grace: 300s (pause phases)
+- Session End on STANDBY: ON (count each wash cycle)
 - Power Smoothing: 30s
 
 **Sauna:**
 - Standby Threshold: 5W
 - Active Threshold: 1000W
-- Session End Grace: 120s (heating cycles)
+- Session End on STANDBY: OFF (heating cycles count as one session)
+- Session End Grace: 120s
 
 **Compressor (daytime only):**
 - Active Threshold: 50W
