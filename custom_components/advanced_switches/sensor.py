@@ -604,7 +604,7 @@ class SmoothedPowerSensor(BaseEntity):
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:chart-line-variant"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_suggested_display_precision = 1
 
     def __init__(
         self,
@@ -618,4 +618,4 @@ class SmoothedPowerSensor(BaseEntity):
     @property
     def native_value(self) -> float:
         """Return the smoothed power value."""
-        return round(self._ctrl.smoothed_power, 2)
+        return round(self._ctrl.smoothed_power, 1)
