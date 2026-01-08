@@ -729,8 +729,8 @@ class AdvancedSwitchController:
                 self._current_power = power
                 # Add to smoothing buffer
                 self._add_power_reading(power)
-                # Track peak power during session (use raw power for peak)
-                if self._state != STATE_OFF and power > self._session_peak_power:
+                # Track peak power only during ACTIVE state (not STANDBY)
+                if self._state == STATE_ACTIVE and power > self._session_peak_power:
                     self._session_peak_power = power
                 # Use smoothed power for state machine
                 smoothed = self._calculate_smoothed_power()
@@ -938,7 +938,9 @@ class AdvancedSwitchController:
         if new_state == old_state:
             return
 
-        if old_state == STATE_OFF and new_state in (STATE_STANDBY, STATE_ACTIVE):
+        # Session starts only when entering ACTIVE (not STANDBY)
+        # Don't restart if session already running (e.g., ACTIVE → STANDBY → ACTIVE)
+        if new_state == STATE_ACTIVE and self._session_start_time is None:
             self._start_session()
 
         self._state = new_state
