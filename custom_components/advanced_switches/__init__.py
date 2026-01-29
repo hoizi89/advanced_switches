@@ -351,7 +351,7 @@ class AdvancedSwitchController:
         Uses time-based window and periodic sampling for stable values.
         With 2-second sampling and 60-second window, we get ~30 readings.
         """
-        if not self._power_readings:
+        if self._power_smoothing_s <= 0 or not self._power_readings:
             return self._current_power
 
         now = datetime.now()
