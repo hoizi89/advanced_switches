@@ -281,6 +281,7 @@ class LastSessionEnergySensor(BaseEntity):
     _attr_translation_key = "last_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:lightning-bolt"
 
     def __init__(
@@ -304,6 +305,7 @@ class LastSessionPeakPowerSensor(BaseEntity):
     _attr_translation_key = "last_session_peak_power"
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:flash-triangle"
 
     def __init__(
@@ -328,6 +330,7 @@ class EnergyTodaySensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_state_class = SensorStateClass.TOTAL
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:flash"
 
     def __init__(
@@ -352,6 +355,7 @@ class EnergyTotalSensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:lightning-bolt"
 
     def __init__(
@@ -603,6 +607,7 @@ class SmoothedPowerSensor(BaseEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:chart-line-variant"
     _attr_suggested_display_precision = 1
 
