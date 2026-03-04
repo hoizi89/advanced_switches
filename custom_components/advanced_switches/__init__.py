@@ -698,7 +698,10 @@ class AdvancedSwitchController:
                 """Sample current power for smoothing buffer."""
                 if self._current_power is not None:
                     self._add_power_reading(self._current_power)
-                    self._notify_entities()
+                    smoothed = self._calculate_smoothed_power()
+                    self.hass.async_create_task(
+                        self._handle_power_change(smoothed)
+                    )
 
             self._remove_listeners.append(
                 async_track_time_interval(
