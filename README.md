@@ -11,6 +11,7 @@ Turns any switch with power/energy sensors (smart plugs, Shelly relays, in-wall 
 - Counts sessions/cycles and tracks energy per session
 - Shows daily and total statistics
 - Optional: Only allow operation at certain times (schedule)
+- Optional: Control via binary_sensor (e.g., EPEX Spot tariff)
 - Optional: Auto-off after X minutes
 
 **Use cases:** Washing machine, dryer, sauna, air compressor, pump, etc.
@@ -91,8 +92,11 @@ ACTIVE (heating) → STANDBY → ACTIVE → STANDBY → ... → OFF
 | Start Time | 06:00 | Allowed from |
 | End Time | 22:00 | Allowed until |
 | Days | Mon-Sun | Allowed days |
+| Control Sensor | — | Optional binary_sensor (e.g., EPEX Spot) |
 
 Outside allowed times: switch turns off and blocks.
+
+**Control Sensor:** You can select a `binary_sensor` to control when the switch is allowed. When the sensor is OFF, the device is blocked. Use this for dynamic electricity tariffs (EPEX Spot), presence detection, or any custom automation logic. Works standalone or combined with time schedule — if both are configured, both conditions must be met.
 
 ### Auto-Off (Optional)
 
