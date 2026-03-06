@@ -57,7 +57,11 @@
           "schedule_enabled": "Zeitsteuerung aktivieren",
           "schedule_start": "Startzeit",
           "schedule_end": "Endzeit",
-          "schedule_days": "Erlaubte Tage"
+          "schedule_days": "Erlaubte Tage",
+          "schedule_binary_sensor": "Steuerungs-Sensor (optional)"
+        },
+        "data_description": {
+          "schedule_binary_sensor": "Zusätzlicher binary_sensor zur Steuerung. Bei OFF wird das Gerät gesperrt. Wenn Zeitsteuerung auch aktiv ist, müssen BEIDE Bedingungen erfüllt sein (Zeit UND Sensor ON)."
         }
       }
     },
@@ -117,7 +121,11 @@
           "schedule_enabled": "Zeitsteuerung aktivieren",
           "schedule_start": "Startzeit",
           "schedule_end": "Endzeit",
-          "schedule_days": "Erlaubte Tage"
+          "schedule_days": "Erlaubte Tage",
+          "schedule_binary_sensor": "Steuerungs-Sensor (optional)"
+        },
+        "data_description": {
+          "schedule_binary_sensor": "Zusätzlicher binary_sensor zur Steuerung. Bei OFF wird das Gerät gesperrt. Wenn Zeitsteuerung auch aktiv ist, müssen BEIDE Bedingungen erfüllt sein (Zeit UND Sensor ON)."
         }
       },
       "auto_off": {

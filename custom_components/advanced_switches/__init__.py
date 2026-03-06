@@ -43,6 +43,7 @@ from .const import (
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
     CONF_POWER_SMOOTHING_S,
+    CONF_SCHEDULE_BINARY_SENSOR,
     CONF_SCHEDULE_DAYS,
     CONF_SCHEDULE_ENABLED,
     CONF_SCHEDULE_END,
@@ -145,6 +146,9 @@ class AdvancedSwitchController:
         )
         self._schedule_days: list[int] = entry.data.get(
             CONF_SCHEDULE_DAYS, DEFAULT_SCHEDULE_DAYS
+        )
+        self._schedule_binary_sensor: str = entry.data.get(
+            CONF_SCHEDULE_BINARY_SENSOR, ""
         )
 
         # Auto-off timer configuration
@@ -487,7 +491,14 @@ class AdvancedSwitchController:
 
     def _is_within_schedule(self) -> bool:
         """Check if current time is within the allowed schedule."""
+        # Check binary sensor (if configured)
+        if self._schedule_binary_sensor:
+            bs_state = self.hass.states.get(self._schedule_binary_sensor)
+            if bs_state and bs_state.state != "on":
+                return False
+
         if not self._schedule_enabled:
+            # If only binary sensor is configured (no time schedule), binary sensor check above is sufficient
             return True
 
         now = datetime.now()
@@ -712,6 +723,19 @@ class AdvancedSwitchController:
 
             self._remove_listeners.append(
                 async_track_time_change(self.hass, schedule_check, second=0)
+            )
+
+        # React to binary sensor state changes for schedule
+        if self._schedule_binary_sensor:
+            @callback
+            def binary_sensor_listener(event: Event) -> None:
+                """Re-evaluate schedule when binary sensor changes."""
+                entity_id = event.data.get("entity_id")
+                if entity_id == self._schedule_binary_sensor:
+                    self.hass.async_create_task(self._enforce_schedule())
+
+            self._remove_listeners.append(
+                self.hass.bus.async_listen(EVENT_STATE_CHANGED, binary_sensor_listener)
             )
 
         # Register periodic power sampling for smoothing (every 2 seconds)

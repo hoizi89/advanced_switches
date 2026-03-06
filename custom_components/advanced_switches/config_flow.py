@@ -26,6 +26,7 @@ from .const import (
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
     CONF_POWER_SMOOTHING_S,
+    CONF_SCHEDULE_BINARY_SENSOR,
     CONF_SCHEDULE_DAYS,
     CONF_SCHEDULE_ENABLED,
     CONF_SCHEDULE_END,
@@ -367,6 +368,9 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                             mode=selector.SelectSelectorMode.DROPDOWN,
                         )
                     ),
+                    vol.Optional(CONF_SCHEDULE_BINARY_SENSOR): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain="binary_sensor")
+                    ),
                 }
             ),
         )
@@ -615,6 +619,9 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                 user_input[CONF_SCHEDULE_DAYS] = [
                     int(d) for d in user_input[CONF_SCHEDULE_DAYS]
                 ]
+            # Handle removed binary sensor
+            if CONF_SCHEDULE_BINARY_SENSOR not in user_input:
+                user_input[CONF_SCHEDULE_BINARY_SENSOR] = ""
             new_data = {**self._config_entry.data, **user_input}
             self.hass.config_entries.async_update_entry(
                 self._config_entry, data=new_data
@@ -623,38 +630,47 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
 
         current = self._config_entry.data
         current_days = current.get(CONF_SCHEDULE_DAYS, DEFAULT_SCHEDULE_DAYS)
+        current_bs = current.get(CONF_SCHEDULE_BINARY_SENSOR, "")
+
+        schema = {
+            vol.Required(
+                CONF_SCHEDULE_ENABLED,
+                default=current.get(CONF_SCHEDULE_ENABLED, DEFAULT_SCHEDULE_ENABLED),
+            ): selector.BooleanSelector(),
+            vol.Required(
+                CONF_SCHEDULE_START,
+                default=current.get(CONF_SCHEDULE_START, DEFAULT_SCHEDULE_START),
+            ): selector.TimeSelector(),
+            vol.Required(
+                CONF_SCHEDULE_END,
+                default=current.get(CONF_SCHEDULE_END, DEFAULT_SCHEDULE_END),
+            ): selector.TimeSelector(),
+            vol.Required(
+                CONF_SCHEDULE_DAYS,
+                default=[str(d) for d in current_days],
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value=d["value"], label=d["label"])
+                        for d in WEEKDAYS
+                    ],
+                    multiple=True,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+        }
+        if current_bs:
+            schema[vol.Optional(CONF_SCHEDULE_BINARY_SENSOR, default=current_bs)] = (
+                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
+            )
+        else:
+            schema[vol.Optional(CONF_SCHEDULE_BINARY_SENSOR)] = (
+                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
+            )
 
         return self.async_show_form(
             step_id="schedule",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_SCHEDULE_ENABLED,
-                        default=current.get(CONF_SCHEDULE_ENABLED, DEFAULT_SCHEDULE_ENABLED),
-                    ): selector.BooleanSelector(),
-                    vol.Required(
-                        CONF_SCHEDULE_START,
-                        default=current.get(CONF_SCHEDULE_START, DEFAULT_SCHEDULE_START),
-                    ): selector.TimeSelector(),
-                    vol.Required(
-                        CONF_SCHEDULE_END,
-                        default=current.get(CONF_SCHEDULE_END, DEFAULT_SCHEDULE_END),
-                    ): selector.TimeSelector(),
-                    vol.Required(
-                        CONF_SCHEDULE_DAYS,
-                        default=[str(d) for d in current_days],
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(value=d["value"], label=d["label"])
-                                for d in WEEKDAYS
-                            ],
-                            multiple=True,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    ),
-                }
-            ),
+            data_schema=vol.Schema(schema),
         )
 
     async def async_step_auto_off(

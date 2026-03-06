@@ -34,6 +34,7 @@ CONF_SCHEDULE_ENABLED = "schedule_enabled"
 CONF_SCHEDULE_START = "schedule_start"
 CONF_SCHEDULE_END = "schedule_end"
 CONF_SCHEDULE_DAYS = "schedule_days"
+CONF_SCHEDULE_BINARY_SENSOR = "schedule_binary_sensor"
 
 # Auto-off timer
 CONF_AUTO_OFF_ENABLED = "auto_off_enabled"

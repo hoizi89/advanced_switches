@@ -55,7 +55,11 @@
           "schedule_enabled": "Enable Schedule",
           "schedule_start": "Start Time",
           "schedule_end": "End Time",
-          "schedule_days": "Allowed Days"
+          "schedule_days": "Allowed Days",
+          "schedule_binary_sensor": "Control Sensor (optional)"
+        },
+        "data_description": {
+          "schedule_binary_sensor": "Additional binary_sensor to control the switch. When OFF, device is blocked. If time schedule is also enabled, BOTH conditions must be met (time AND sensor ON)."
         }
       }
     },
@@ -112,7 +116,11 @@
           "schedule_enabled": "Enable Schedule",
           "schedule_start": "Start Time",
           "schedule_end": "End Time",
-          "schedule_days": "Allowed Days"
+          "schedule_days": "Allowed Days",
+          "schedule_binary_sensor": "Control Sensor (optional)"
+        },
+        "data_description": {
+          "schedule_binary_sensor": "Additional binary_sensor to control the switch. When OFF, device is blocked. If time schedule is also enabled, BOTH conditions must be met (time AND sensor ON)."
         }
       },
       "auto_off": {
