@@ -26,6 +26,7 @@ from .const import (
     CONF_ON_DELAY_S,
     CONF_POWER_ENTITY,
     CONF_POWER_SMOOTHING_S,
+    CONF_CONTROL_BINARY_SENSOR,
     CONF_SCHEDULE_BINARY_SENSOR,
     CONF_SCHEDULE_DAYS,
     CONF_SCHEDULE_ENABLED,
@@ -371,6 +372,9 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_SCHEDULE_BINARY_SENSOR): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="binary_sensor")
                     ),
+                    vol.Optional(CONF_CONTROL_BINARY_SENSOR): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain="binary_sensor")
+                    ),
                 }
             ),
         )
@@ -396,7 +400,7 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
         """Manage the options - show menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["thresholds", "timing", "schedule", "auto_off", "reset"],
+            menu_options=["thresholds", "timing", "control", "auto_off", "reset"],
         )
 
     async def async_step_thresholds(
@@ -609,19 +613,21 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                 ),
             )
 
-    async def async_step_schedule(
+    async def async_step_control(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle schedule options."""
+        """Handle control & schedule options."""
         if user_input is not None:
             # Convert day strings back to integers
             if CONF_SCHEDULE_DAYS in user_input:
                 user_input[CONF_SCHEDULE_DAYS] = [
                     int(d) for d in user_input[CONF_SCHEDULE_DAYS]
                 ]
-            # Handle removed binary sensor
+            # Handle removed binary sensors
             if CONF_SCHEDULE_BINARY_SENSOR not in user_input:
                 user_input[CONF_SCHEDULE_BINARY_SENSOR] = ""
+            if CONF_CONTROL_BINARY_SENSOR not in user_input:
+                user_input[CONF_CONTROL_BINARY_SENSOR] = ""
             new_data = {**self._config_entry.data, **user_input}
             self.hass.config_entries.async_update_entry(
                 self._config_entry, data=new_data
@@ -668,8 +674,18 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                 selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
             )
 
+        current_cs = current.get(CONF_CONTROL_BINARY_SENSOR, "")
+        if current_cs:
+            schema[vol.Optional(CONF_CONTROL_BINARY_SENSOR, default=current_cs)] = (
+                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
+            )
+        else:
+            schema[vol.Optional(CONF_CONTROL_BINARY_SENSOR)] = (
+                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
+            )
+
         return self.async_show_form(
-            step_id="schedule",
+            step_id="control",
             data_schema=vol.Schema(schema),
         )
 

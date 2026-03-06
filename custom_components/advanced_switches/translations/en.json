@@ -56,10 +56,12 @@
           "schedule_start": "Start Time",
           "schedule_end": "End Time",
           "schedule_days": "Allowed Days",
-          "schedule_binary_sensor": "Control Sensor (optional)"
+          "schedule_binary_sensor": "Block Sensor (optional)",
+          "control_binary_sensor": "Control Sensor (optional)"
         },
         "data_description": {
-          "schedule_binary_sensor": "Additional binary_sensor to control the switch. When OFF, device is blocked. If time schedule is also enabled, BOTH conditions must be met (time AND sensor ON)."
+          "schedule_binary_sensor": "When this sensor is OFF, the switch is blocked. If time schedule is also enabled, BOTH conditions must be met.",
+          "control_binary_sensor": "Directly controls the switch: sensor ON → switch ON, sensor OFF → switch OFF. Use for EPEX Spot or similar."
         }
       }
     },
@@ -75,7 +77,7 @@
         "menu_options": {
           "thresholds": "Thresholds",
           "timing": "Timing / Delays",
-          "schedule": "Schedule",
+          "control": "Control",
           "auto_off": "Auto-Off Timer"
         }
       },
@@ -109,18 +111,20 @@
           "power_smoothing_s": "Average over X seconds (0 = disabled)"
         }
       },
-      "schedule": {
-        "title": "Schedule",
-        "description": "Allow switch only at certain times.",
+      "control": {
+        "title": "Control",
+        "description": "Schedule, block sensor and control sensor.",
         "data": {
-          "schedule_enabled": "Enable Schedule",
+          "schedule_enabled": "Enable Time Schedule",
           "schedule_start": "Start Time",
           "schedule_end": "End Time",
           "schedule_days": "Allowed Days",
-          "schedule_binary_sensor": "Control Sensor (optional)"
+          "schedule_binary_sensor": "Block Sensor (optional)",
+          "control_binary_sensor": "Control Sensor (optional)"
         },
         "data_description": {
-          "schedule_binary_sensor": "Additional binary_sensor to control the switch. When OFF, device is blocked. If time schedule is also enabled, BOTH conditions must be met (time AND sensor ON)."
+          "schedule_binary_sensor": "When this sensor is OFF, the switch is blocked. If time schedule is also enabled, BOTH conditions must be met.",
+          "control_binary_sensor": "Directly controls the switch: sensor ON → switch ON, sensor OFF → switch OFF. Use for EPEX Spot or similar."
         }
       },
       "auto_off": {

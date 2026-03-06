@@ -58,10 +58,12 @@
           "schedule_start": "Startzeit",
           "schedule_end": "Endzeit",
           "schedule_days": "Erlaubte Tage",
-          "schedule_binary_sensor": "Steuerungs-Sensor (optional)"
+          "schedule_binary_sensor": "Sperr-Sensor (optional)",
+          "control_binary_sensor": "Steuerungs-Sensor (optional)"
         },
         "data_description": {
-          "schedule_binary_sensor": "Zusätzlicher binary_sensor zur Steuerung. Bei OFF wird das Gerät gesperrt. Wenn Zeitsteuerung auch aktiv ist, müssen BEIDE Bedingungen erfüllt sein (Zeit UND Sensor ON)."
+          "schedule_binary_sensor": "Wenn dieser Sensor OFF ist, wird der Schalter gesperrt. Bei aktiver Zeitsteuerung müssen BEIDE Bedingungen erfüllt sein.",
+          "control_binary_sensor": "Steuert den Schalter direkt: Sensor ON → Schalter EIN, Sensor OFF → Schalter AUS. Für EPEX Spot oder ähnliches."
         }
       }
     },
@@ -77,7 +79,7 @@
         "menu_options": {
           "thresholds": "Schwellwerte",
           "timing": "Timing / Verzögerungen",
-          "schedule": "Zeitsteuerung",
+          "control": "Steuerung",
           "auto_off": "Auto-Abschaltung",
           "reset": "Zähler zurücksetzen"
         }
@@ -114,18 +116,20 @@
           "session_end_on_standby": "AN: Jede Aktiv-Phase ist eigene Session. AUS: Session laeuft durch Standby weiter"
         }
       },
-      "schedule": {
-        "title": "Zeitsteuerung",
-        "description": "Schalter nur zu bestimmten Zeiten erlauben.",
+      "control": {
+        "title": "Steuerung",
+        "description": "Zeitsteuerung, Sperr-Sensor und Steuerungs-Sensor.",
         "data": {
           "schedule_enabled": "Zeitsteuerung aktivieren",
           "schedule_start": "Startzeit",
           "schedule_end": "Endzeit",
           "schedule_days": "Erlaubte Tage",
-          "schedule_binary_sensor": "Steuerungs-Sensor (optional)"
+          "schedule_binary_sensor": "Sperr-Sensor (optional)",
+          "control_binary_sensor": "Steuerungs-Sensor (optional)"
         },
         "data_description": {
-          "schedule_binary_sensor": "Zusätzlicher binary_sensor zur Steuerung. Bei OFF wird das Gerät gesperrt. Wenn Zeitsteuerung auch aktiv ist, müssen BEIDE Bedingungen erfüllt sein (Zeit UND Sensor ON)."
+          "schedule_binary_sensor": "Wenn dieser Sensor OFF ist, wird der Schalter gesperrt. Bei aktiver Zeitsteuerung müssen BEIDE Bedingungen erfüllt sein.",
+          "control_binary_sensor": "Steuert den Schalter direkt: Sensor ON → Schalter EIN, Sensor OFF → Schalter AUS. Für EPEX Spot oder ähnliches."
         }
       },
       "auto_off": {

@@ -31,6 +31,7 @@ from .const import (
     CONF_ACTIVE_STANDBY_DELAY_S,
     CONF_ACTIVE_THRESHOLD_W,
     CONF_AUTO_OFF_ENABLED,
+    CONF_CONTROL_BINARY_SENSOR,
     CONF_AUTO_OFF_MINUTES,
     CONF_AUTO_OFF_STANDBY_ENABLED,
     CONF_AUTO_OFF_STANDBY_MINUTES,
@@ -149,6 +150,9 @@ class AdvancedSwitchController:
         )
         self._schedule_binary_sensor: str = entry.data.get(
             CONF_SCHEDULE_BINARY_SENSOR, ""
+        )
+        self._control_binary_sensor: str = entry.data.get(
+            CONF_CONTROL_BINARY_SENSOR, ""
         )
 
         # Auto-off timer configuration
@@ -574,6 +578,34 @@ class AdvancedSwitchController:
                 )
             self._notify_entities()
 
+    async def _control_switch_on(self) -> None:
+        """Turn switch ON (triggered by control binary sensor)."""
+        if self._schedule_blocked:
+            _LOGGER.debug("%s: Control sensor ON but blocked by schedule", self._device_name)
+            return
+        switch_state = self.hass.states.get(self._switch_entity)
+        if switch_state and switch_state.state != "on":
+            _LOGGER.info("%s: Control sensor ON → turning switch ON", self._device_name)
+            await self.hass.services.async_call(
+                "switch", "turn_on",
+                {"entity_id": self._switch_entity},
+                blocking=True,
+            )
+
+    async def _control_switch_off(self) -> None:
+        """Turn switch OFF (triggered by control binary sensor)."""
+        switch_state = self.hass.states.get(self._switch_entity)
+        if switch_state and switch_state.state == "on":
+            _LOGGER.info("%s: Control sensor OFF → turning switch OFF", self._device_name)
+            await self.hass.services.async_call(
+                "switch", "turn_off",
+                {"entity_id": self._switch_entity},
+                blocking=True,
+            )
+            if self._state != STATE_OFF:
+                self._end_session()
+            self._notify_entities()
+
     def register_entity_listener(self, callback_fn: Callable[[], None]) -> None:
         """Register a callback for entity updates."""
         self._entity_listeners.append(callback_fn)
@@ -737,6 +769,29 @@ class AdvancedSwitchController:
             self._remove_listeners.append(
                 self.hass.bus.async_listen(EVENT_STATE_CHANGED, binary_sensor_listener)
             )
+
+        # React to control binary sensor (direct switch mirroring)
+        if self._control_binary_sensor:
+            @callback
+            def control_sensor_listener(event: Event) -> None:
+                """Mirror control binary sensor to switch."""
+                entity_id = event.data.get("entity_id")
+                if entity_id == self._control_binary_sensor:
+                    new_state = event.data.get("new_state")
+                    if new_state and new_state.state == "on":
+                        self.hass.async_create_task(self._control_switch_on())
+                    elif new_state and new_state.state == "off":
+                        self.hass.async_create_task(self._control_switch_off())
+
+            self._remove_listeners.append(
+                self.hass.bus.async_listen(EVENT_STATE_CHANGED, control_sensor_listener)
+            )
+
+            # Apply initial state of control sensor
+            cs_state = self.hass.states.get(self._control_binary_sensor)
+            if cs_state and cs_state.state == "off":
+                # Control sensor is OFF at startup — turn switch off
+                self.hass.async_create_task(self._control_switch_off())
 
         # Register periodic power sampling for smoothing (every 2 seconds)
         # This ensures stable values even when sensor doesn't update frequently
