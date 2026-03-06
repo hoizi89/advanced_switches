@@ -8,7 +8,7 @@
           "device_name": "Device Name",
           "switch_entity": "Switch Entity",
           "power_entity": "Power Entity (Watt)",
-          "energy_entity": "Energy Entity (kWh)",
+          "energy_entity": "Energy Entity (kWh, optional)",
           "mode": "Operating Mode"
         }
       },
@@ -122,13 +122,17 @@
       },
       "auto_off": {
         "title": "Auto-Off Timer",
-        "description": "Turns off the switch automatically X minutes after it was turned on.",
+        "description": "Automatically turn off the switch after a timeout.",
         "data": {
-          "auto_off_enabled": "Enable Auto-Off",
-          "auto_off_minutes": "Turn off after (minutes)"
+          "auto_off_enabled": "Enable Auto-Off (after turn on)",
+          "auto_off_minutes": "Turn off after (minutes)",
+          "auto_off_standby_enabled": "Enable Auto-Off (after standby)",
+          "auto_off_standby_minutes": "Turn off after standby (minutes)"
         },
         "data_description": {
-          "auto_off_minutes": "Switch will be turned off X minutes after being turned on"
+          "auto_off_minutes": "Switch will be turned off X minutes after being turned on",
+          "auto_off_standby_enabled": "Turn off switch after it has been in standby for X minutes",
+          "auto_off_standby_minutes": "Switch will be turned off X minutes after entering standby"
         }
       },
       "reset": {

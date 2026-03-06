@@ -39,6 +39,10 @@ CONF_SCHEDULE_DAYS = "schedule_days"
 CONF_AUTO_OFF_ENABLED = "auto_off_enabled"
 CONF_AUTO_OFF_MINUTES = "auto_off_minutes"
 
+# Auto-off after standby
+CONF_AUTO_OFF_STANDBY_ENABLED = "auto_off_standby_enabled"
+CONF_AUTO_OFF_STANDBY_MINUTES = "auto_off_standby_minutes"
+
 # Defaults - Simple mode
 DEFAULT_ACTIVE_THRESHOLD_W = 50
 DEFAULT_ON_DELAY_S = 3
@@ -63,6 +67,10 @@ DEFAULT_SCHEDULE_DAYS = [0, 1, 2, 3, 4, 5, 6]  # All days (Mon=0, Sun=6)
 # Defaults - Auto-off timer
 DEFAULT_AUTO_OFF_ENABLED = False
 DEFAULT_AUTO_OFF_MINUTES = 60
+
+# Defaults - Auto-off after standby
+DEFAULT_AUTO_OFF_STANDBY_ENABLED = False
+DEFAULT_AUTO_OFF_STANDBY_MINUTES = 60
 
 # Session history
 SESSION_HISTORY_SIZE = 10

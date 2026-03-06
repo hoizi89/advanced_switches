@@ -8,7 +8,7 @@
           "device_name": "Gerätename",
           "switch_entity": "Switch Entity (Steckdose)",
           "power_entity": "Power Entity (Watt)",
-          "energy_entity": "Energy Entity (kWh)",
+          "energy_entity": "Energy Entity (kWh, optional)",
           "mode": "Betriebsmodus"
         }
       },
@@ -122,13 +122,17 @@
       },
       "auto_off": {
         "title": "Auto-Abschaltung",
-        "description": "Schaltet den Switch automatisch aus, X Minuten nachdem er eingeschaltet wurde.",
+        "description": "Switch automatisch nach Timeout ausschalten.",
         "data": {
-          "auto_off_enabled": "Auto-Abschaltung aktivieren",
-          "auto_off_minutes": "Ausschalten nach (Minuten)"
+          "auto_off_enabled": "Auto-Aus (nach Einschalten)",
+          "auto_off_minutes": "Ausschalten nach (Minuten)",
+          "auto_off_standby_enabled": "Auto-Aus (nach Standby)",
+          "auto_off_standby_minutes": "Ausschalten nach Standby (Minuten)"
         },
         "data_description": {
-          "auto_off_minutes": "Switch wird X Minuten nach dem Einschalten automatisch ausgeschaltet"
+          "auto_off_minutes": "Switch wird X Minuten nach dem Einschalten automatisch ausgeschaltet",
+          "auto_off_standby_enabled": "Switch ausschalten wenn er X Minuten im Standby war",
+          "auto_off_standby_minutes": "Switch wird X Minuten nach Standby-Beginn ausgeschaltet"
         }
       },
       "reset": {

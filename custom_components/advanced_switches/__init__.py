@@ -32,6 +32,8 @@ from .const import (
     CONF_ACTIVE_THRESHOLD_W,
     CONF_AUTO_OFF_ENABLED,
     CONF_AUTO_OFF_MINUTES,
+    CONF_AUTO_OFF_STANDBY_ENABLED,
+    CONF_AUTO_OFF_STANDBY_MINUTES,
     CONF_DEVICE_NAME,
     CONF_ENERGY_ENTITY,
     CONF_MIN_ACTIVE_S,
@@ -54,6 +56,8 @@ from .const import (
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
     DEFAULT_AUTO_OFF_ENABLED,
     DEFAULT_AUTO_OFF_MINUTES,
+    DEFAULT_AUTO_OFF_STANDBY_ENABLED,
+    DEFAULT_AUTO_OFF_STANDBY_MINUTES,
     DEFAULT_MIN_ACTIVE_S,
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
@@ -123,7 +127,7 @@ class AdvancedSwitchController:
         self._device_name: str = entry.data[CONF_DEVICE_NAME]
         self._switch_entity: str = entry.data[CONF_SWITCH_ENTITY]
         self._power_entity: str = entry.data[CONF_POWER_ENTITY]
-        self._energy_entity: str = entry.data[CONF_ENERGY_ENTITY]
+        self._energy_entity: str = entry.data.get(CONF_ENERGY_ENTITY, "")
         self._mode: str = entry.data[CONF_MODE]
 
         # Get source device ID for device linking
@@ -149,6 +153,14 @@ class AdvancedSwitchController:
         )
         self._auto_off_minutes: int = entry.data.get(
             CONF_AUTO_OFF_MINUTES, DEFAULT_AUTO_OFF_MINUTES
+        )
+
+        # Auto-off after standby
+        self._auto_off_standby_enabled: bool = entry.data.get(
+            CONF_AUTO_OFF_STANDBY_ENABLED, DEFAULT_AUTO_OFF_STANDBY_ENABLED
+        )
+        self._auto_off_standby_minutes: int = entry.data.get(
+            CONF_AUTO_OFF_STANDBY_MINUTES, DEFAULT_AUTO_OFF_STANDBY_MINUTES
         )
 
         # Power smoothing (both modes)
@@ -213,6 +225,7 @@ class AdvancedSwitchController:
         self._auto_off_at: datetime | None = None  # When auto-off will trigger
         self._pending_session_end: bool = False  # Ignore fluctuations during grace period
         self._pending_standby_end_timer: Any | None = None  # For Waschmaschine mode
+        self._standby_auto_off_timer: Any | None = None  # Auto-off after standby
 
         # Persistent statistics
         self._sessions_total: int = 0
@@ -462,6 +475,16 @@ class AdvancedSwitchController:
         """Return when auto-off will trigger."""
         return self._auto_off_at
 
+    @property
+    def auto_off_standby_enabled(self) -> bool:
+        """Return if auto-off after standby is enabled."""
+        return self._auto_off_standby_enabled
+
+    @property
+    def auto_off_standby_minutes(self) -> int:
+        """Return auto-off standby timeout in minutes."""
+        return self._auto_off_standby_minutes
+
     def _is_within_schedule(self) -> bool:
         """Check if current time is within the allowed schedule."""
         if not self._schedule_enabled:
@@ -642,13 +665,14 @@ class AdvancedSwitchController:
         # Initial schedule check
         await self._enforce_schedule()
 
-        # Load initial energy value
-        energy_state = self.hass.states.get(self._energy_entity)
-        if energy_state and energy_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            try:
-                self._current_energy = float(energy_state.state)
-            except ValueError:
-                pass
+        # Load initial energy value (if energy entity configured)
+        if self._energy_entity:
+            energy_state = self.hass.states.get(self._energy_entity)
+            if energy_state and energy_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try:
+                    self._current_energy = float(energy_state.state)
+                except ValueError:
+                    pass
 
         # Check current power
         if not self._schedule_blocked:
@@ -709,6 +733,27 @@ class AdvancedSwitchController:
                 )
             )
 
+        # Periodic state re-evaluation every 30s to prevent stuck states
+        # and update live session sensors
+        @callback
+        def periodic_recheck(_: datetime) -> None:
+            """Re-evaluate state and update live sensors."""
+            # Re-evaluate state machine with current power
+            if self._state != STATE_OFF and self._current_power is not None:
+                smoothed = self._calculate_smoothed_power()
+                self.hass.async_create_task(
+                    self._handle_power_change(smoothed)
+                )
+            # Always notify to update live duration sensors during active sessions
+            if self._session_start_time is not None:
+                self._notify_entities()
+
+        self._remove_listeners.append(
+            async_track_time_interval(
+                self.hass, periodic_recheck, timedelta(seconds=30)
+            )
+        )
+
         _LOGGER.info(
             "%s: Started (mode=%s, standby=%.2fW, active=%.2fW, smoothing=%ds)",
             self._device_name,
@@ -724,6 +769,7 @@ class AdvancedSwitchController:
         self._cancel_off_timer()
         self._cancel_standby_end_timer()
         self._cancel_auto_off_timer()
+        self._cancel_standby_auto_off_timer()
 
         for remove_listener in self._remove_listeners:
             remove_listener()
@@ -739,7 +785,7 @@ class AdvancedSwitchController:
         if new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             if entity_id == self._power_entity:
                 self._power_available = False
-            elif entity_id == self._energy_entity:
+            elif self._energy_entity and entity_id == self._energy_entity:
                 self._energy_available = False
             return
 
@@ -759,7 +805,7 @@ class AdvancedSwitchController:
             except ValueError:
                 _LOGGER.debug("Invalid power value: %s", new_state.state)
 
-        elif entity_id == self._energy_entity:
+        elif self._energy_entity and entity_id == self._energy_entity:
             self._energy_available = True
             try:
                 self._current_energy = float(new_state.state)
@@ -990,6 +1036,39 @@ class AdvancedSwitchController:
         )
         self._end_session()
 
+    def _start_standby_auto_off_timer(self) -> None:
+        """Start auto-off timer for standby state."""
+        if not self._auto_off_standby_enabled:
+            return
+        if self._standby_auto_off_timer is not None:
+            return  # Already running
+
+        @callback
+        def standby_auto_off_callback(_: datetime) -> None:
+            """Handle standby auto-off timer expiration."""
+            self._standby_auto_off_timer = None
+            _LOGGER.info(
+                "%s: Standby auto-off timer expired after %d minutes, turning off",
+                self._device_name,
+                self._auto_off_standby_minutes,
+            )
+            self.hass.async_create_task(self._auto_turn_off())
+
+        self._standby_auto_off_timer = async_call_later(
+            self.hass, self._auto_off_standby_minutes * 60, standby_auto_off_callback
+        )
+        _LOGGER.debug(
+            "%s: Standby auto-off timer started for %d minutes",
+            self._device_name,
+            self._auto_off_standby_minutes,
+        )
+
+    def _cancel_standby_auto_off_timer(self) -> None:
+        """Cancel standby auto-off timer."""
+        if self._standby_auto_off_timer is not None:
+            self._standby_auto_off_timer()
+            self._standby_auto_off_timer = None
+
     def _transition_to(self, new_state: str) -> None:
         """Transition to a new state."""
         old_state = self._state
@@ -1001,6 +1080,12 @@ class AdvancedSwitchController:
         # Don't restart if session already running (e.g., ACTIVE → STANDBY → ACTIVE)
         if new_state == STATE_ACTIVE and self._session_start_time is None:
             self._start_session()
+
+        # Manage standby auto-off timer
+        if new_state == STATE_STANDBY:
+            self._start_standby_auto_off_timer()
+        else:
+            self._cancel_standby_auto_off_timer()
 
         self._state = new_state
         _LOGGER.info(

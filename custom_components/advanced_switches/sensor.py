@@ -554,7 +554,7 @@ class AutoOffRemainingSensor(BaseEntity):
         """Return remaining time as human-readable string."""
         auto_off_at = self._ctrl.auto_off_at
         if auto_off_at is None:
-            return "Inaktiv"
+            return "Inactive"
 
         from datetime import datetime
         now = datetime.now(auto_off_at.tzinfo) if auto_off_at.tzinfo else datetime.now()
@@ -586,7 +586,7 @@ class AutoOffRemainingSensor(BaseEntity):
         if auto_off_at is None:
             attrs["remaining_minutes"] = None
             attrs["auto_off_at"] = None
-            attrs["status"] = "Timer startet wenn Schalter eingeschaltet wird"
+            attrs["status"] = "Timer starts when switch is turned on"
             return attrs
 
         from datetime import datetime
@@ -596,7 +596,7 @@ class AutoOffRemainingSensor(BaseEntity):
 
         attrs["remaining_minutes"] = total_minutes
         attrs["auto_off_at"] = auto_off_at.isoformat()
-        attrs["status"] = "Timer läuft"
+        attrs["status"] = "Timer running"
         return attrs
 
 

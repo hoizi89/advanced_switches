@@ -15,6 +15,8 @@ from .const import (
     CONF_ACTIVE_THRESHOLD_W,
     CONF_AUTO_OFF_ENABLED,
     CONF_AUTO_OFF_MINUTES,
+    CONF_AUTO_OFF_STANDBY_ENABLED,
+    CONF_AUTO_OFF_STANDBY_MINUTES,
     CONF_DEVICE_NAME,
     CONF_ENERGY_ENTITY,
     CONF_MIN_ACTIVE_S,
@@ -37,6 +39,8 @@ from .const import (
     DEFAULT_ACTIVE_THRESHOLD_W_STANDBY,
     DEFAULT_AUTO_OFF_ENABLED,
     DEFAULT_AUTO_OFF_MINUTES,
+    DEFAULT_AUTO_OFF_STANDBY_ENABLED,
+    DEFAULT_AUTO_OFF_STANDBY_MINUTES,
     DEFAULT_MIN_ACTIVE_S,
     DEFAULT_MIN_SESSION_S,
     DEFAULT_OFF_DELAY_S,
@@ -57,13 +61,13 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 WEEKDAYS = [
-    {"value": "0", "label": "Montag"},
-    {"value": "1", "label": "Dienstag"},
-    {"value": "2", "label": "Mittwoch"},
-    {"value": "3", "label": "Donnerstag"},
-    {"value": "4", "label": "Freitag"},
-    {"value": "5", "label": "Samstag"},
-    {"value": "6", "label": "Sonntag"},
+    {"value": "0", "label": "Monday"},
+    {"value": "1", "label": "Tuesday"},
+    {"value": "2", "label": "Wednesday"},
+    {"value": "3", "label": "Thursday"},
+    {"value": "4", "label": "Friday"},
+    {"value": "5", "label": "Saturday"},
+    {"value": "6", "label": "Sunday"},
 ]
 
 
@@ -93,8 +97,6 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_SWITCH_ENTITY] = "required"
             if not user_input.get(CONF_POWER_ENTITY):
                 errors[CONF_POWER_ENTITY] = "required"
-            if not user_input.get(CONF_ENERGY_ENTITY):
-                errors[CONF_ENERGY_ENTITY] = "required"
 
             if not errors:
                 self._data = user_input
@@ -117,7 +119,7 @@ class AdvancedSwitchesConfigFlow(ConfigFlow, domain=DOMAIN):
                             device_class="power",
                         )
                     ),
-                    vol.Required(CONF_ENERGY_ENTITY): selector.EntitySelector(
+                    vol.Optional(CONF_ENERGY_ENTITY): selector.EntitySelector(
                         selector.EntitySelectorConfig(
                             domain="sensor",
                             device_class="energy",
@@ -679,6 +681,22 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_AUTO_OFF_MINUTES,
                         default=current.get(CONF_AUTO_OFF_MINUTES, DEFAULT_AUTO_OFF_MINUTES),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1,
+                            max=1440,
+                            step=1,
+                            unit_of_measurement="min",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_AUTO_OFF_STANDBY_ENABLED,
+                        default=current.get(CONF_AUTO_OFF_STANDBY_ENABLED, DEFAULT_AUTO_OFF_STANDBY_ENABLED),
+                    ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_AUTO_OFF_STANDBY_MINUTES,
+                        default=current.get(CONF_AUTO_OFF_STANDBY_MINUTES, DEFAULT_AUTO_OFF_STANDBY_MINUTES),
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             min=1,
