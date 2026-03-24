@@ -665,24 +665,12 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
                 )
             ),
         }
-        if current_bs:
-            schema[vol.Optional(CONF_SCHEDULE_BINARY_SENSOR, default=current_bs)] = (
-                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
-            )
-        else:
-            schema[vol.Optional(CONF_SCHEDULE_BINARY_SENSOR)] = (
-                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
-            )
+        bs_key = vol.Optional(CONF_SCHEDULE_BINARY_SENSOR, description={"suggested_value": current_bs}) if current_bs else vol.Optional(CONF_SCHEDULE_BINARY_SENSOR)
+        schema[bs_key] = selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
 
         current_cs = current.get(CONF_CONTROL_BINARY_SENSOR, "")
-        if current_cs:
-            schema[vol.Optional(CONF_CONTROL_BINARY_SENSOR, default=current_cs)] = (
-                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
-            )
-        else:
-            schema[vol.Optional(CONF_CONTROL_BINARY_SENSOR)] = (
-                selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
-            )
+        cs_key = vol.Optional(CONF_CONTROL_BINARY_SENSOR, description={"suggested_value": current_cs}) if current_cs else vol.Optional(CONF_CONTROL_BINARY_SENSOR)
+        schema[cs_key] = selector.EntitySelector(selector.EntitySelectorConfig(domain="binary_sensor"))
 
         return self.async_show_form(
             step_id="control",
