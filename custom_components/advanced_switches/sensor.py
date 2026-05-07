@@ -263,16 +263,14 @@ class LastSessionDurationSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_last_session_duration"
 
     @property
-    def native_value(self) -> str | None:
-        """Return the last session duration formatted."""
-        if self._ctrl.last_session_duration_s is None:
-            return None
-        return format_duration(self._ctrl.last_session_duration_s)
+    def native_value(self) -> str:
+        """Return the last session duration formatted (0s if no session yet)."""
+        return format_duration(self._ctrl.last_session_duration_s or 0)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return raw seconds as attribute."""
-        return {"seconds": self._ctrl.last_session_duration_s}
+        return {"seconds": self._ctrl.last_session_duration_s or 0}
 
 
 class LastSessionEnergySensor(BaseEntity):
@@ -281,6 +279,7 @@ class LastSessionEnergySensor(BaseEntity):
     _attr_translation_key = "last_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:lightning-bolt"
 
@@ -294,9 +293,9 @@ class LastSessionEnergySensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_last_session_energy"
 
     @property
-    def native_value(self) -> float | None:
-        """Return the last session energy consumption."""
-        return self._ctrl.last_session_energy_kwh
+    def native_value(self) -> float:
+        """Return the last session energy consumption (0 if no session yet)."""
+        return self._ctrl.last_session_energy_kwh or 0.0
 
 
 class LastSessionPeakPowerSensor(BaseEntity):
@@ -305,6 +304,7 @@ class LastSessionPeakPowerSensor(BaseEntity):
     _attr_translation_key = "last_session_peak_power"
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:flash-triangle"
 
@@ -318,9 +318,9 @@ class LastSessionPeakPowerSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_last_session_peak_power"
 
     @property
-    def native_value(self) -> float | None:
-        """Return the last session peak power."""
-        return self._ctrl.last_session_peak_power_w
+    def native_value(self) -> float:
+        """Return the last session peak power (0 if no session yet)."""
+        return self._ctrl.last_session_peak_power_w or 0.0
 
 
 class EnergyTodaySensor(BaseEntity):
@@ -392,21 +392,14 @@ class CurrentSessionDurationSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_current_session_duration"
 
     @property
-    def native_value(self) -> str | None:
-        """Return the current session duration formatted."""
-        if self._ctrl.current_session_duration_s is None:
-            return None
-        return format_duration(self._ctrl.current_session_duration_s)
+    def native_value(self) -> str:
+        """Return the current session duration formatted (0s if no session active)."""
+        return format_duration(self._ctrl.current_session_duration_s or 0)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return raw seconds as attribute."""
-        return {"seconds": self._ctrl.current_session_duration_s}
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+        return {"seconds": self._ctrl.current_session_duration_s or 0}
 
 
 class CurrentSessionEnergySensor(BaseEntity):
@@ -415,6 +408,7 @@ class CurrentSessionEnergySensor(BaseEntity):
     _attr_translation_key = "current_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:lightning-bolt-circle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -428,15 +422,10 @@ class CurrentSessionEnergySensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_current_session_energy"
 
     @property
-    def native_value(self) -> float | None:
-        """Return the current session energy consumption."""
+    def native_value(self) -> float:
+        """Return the current session energy consumption (0 if no session active)."""
         value = self._ctrl.current_session_energy_kwh
-        return round(value, 3) if value is not None else None
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+        return round(value, 3) if value is not None else 0.0
 
 
 class CurrentSessionPeakPowerSensor(BaseEntity):
@@ -445,6 +434,7 @@ class CurrentSessionPeakPowerSensor(BaseEntity):
     _attr_translation_key = "current_session_peak_power"
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:flash-triangle-outline"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -458,16 +448,11 @@ class CurrentSessionPeakPowerSensor(BaseEntity):
         self._attr_unique_id = f"{entry.entry_id}_current_session_peak_power"
 
     @property
-    def native_value(self) -> float | None:
-        """Return the current session peak power."""
+    def native_value(self) -> float:
+        """Return the current session peak power (0 if no session active)."""
         if self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE):
             return round(self._ctrl.session_peak_power, 1)
-        return None
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return self._ctrl.state in (STATE_STANDBY, STATE_ACTIVE)
+        return 0.0
 
 
 # Average sensors
