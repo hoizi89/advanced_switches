@@ -13,12 +13,10 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfEnergy, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AdvancedSwitchController
 from .const import (
-    CONF_DEVICE_NAME,
     DOMAIN,
     STATE_ACTIVE,
     STATE_BLOCKED,
@@ -100,19 +98,7 @@ class BaseEntity(SensorEntity):
         self._ctrl = controller
         self._entry = entry
 
-        # Link to source device if available, otherwise create virtual device
-        source_identifiers = controller.get_source_device_identifiers()
-        if source_identifiers:
-            self._attr_device_info = DeviceInfo(
-                identifiers=source_identifiers,
-            )
-        else:
-            self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, entry.entry_id)},
-                name=entry.data[CONF_DEVICE_NAME],
-                manufacturer="Advanced Switches",
-                model="Virtual Device",
-            )
+        self._attr_device_info = controller.build_device_info()
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks when entity is added."""

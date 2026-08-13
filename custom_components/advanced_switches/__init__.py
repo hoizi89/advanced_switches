@@ -94,9 +94,46 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await controller.async_start()
 
+    # Drop device entries left over from older versions (see below)
+    _async_cleanup_stale_devices(hass, entry)
+
     # Register update listener for options changes
     entry.async_on_unload(entry.add_update_listener(async_update_entry))
 
+    return True
+
+
+@callback
+def _async_cleanup_stale_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Detach device entries of this config entry that hold no entities.
+
+    Up to 1.5.2 the entities were attached to the *source* device by reusing its
+    identifiers. When the source entity later moved to another device — swapping
+    a plug from Zigbee2MQTT to ZHA, or from meross_lan to Matter — the entities
+    followed along and the previous device entry stayed behind: empty, but still
+    listed under this config entry and impossible to delete from the UI.
+
+    Devices that still own entities are never touched, so the source device of an
+    ongoing setup is safe.
+    """
+    device_registry = dr.async_get(hass)
+    entity_registry = er.async_get(hass)
+
+    for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id):
+        if er.async_entries_for_device(
+            entity_registry, device.id, include_disabled_entities=True
+        ):
+            continue
+        _LOGGER.debug("Removing stale device entry %s (%s)", device.name, device.id)
+        device_registry.async_update_device(
+            device.id, remove_config_entry_id=entry.entry_id
+        )
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Allow devices of this entry to be deleted from the UI."""
     return True
 
 
@@ -293,6 +330,27 @@ class AdvancedSwitchController:
             )
             return device.identifiers
         return None
+
+    def build_device_info(self) -> dr.DeviceInfo:
+        """Return the device info shared by every entity of this entry.
+
+        The tracker always owns its own device, keyed by the config entry, and
+        merely links to the source device via ``via_device``. Reusing the source
+        device's identifiers instead would tie the tracker to whatever device the
+        source entity happens to live on today — see _async_cleanup_stale_devices.
+        """
+        device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, self.entry.entry_id)},
+            name=self._device_name,
+            manufacturer="Advanced Switches",
+            model="Session Tracker",
+        )
+
+        source_identifiers = self.get_source_device_identifiers()
+        if source_identifiers:
+            device_info["via_device"] = next(iter(source_identifiers))
+
+        return device_info
 
     @property
     def source_device_id(self) -> str | None:
