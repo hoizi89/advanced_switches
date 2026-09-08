@@ -403,6 +403,53 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
             menu_options=["thresholds", "timing", "control", "auto_off", "reset"],
         )
 
+    async def async_step_entities(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Re-point the source entities at a renamed or re-paired device."""
+        if user_input is not None:
+            new_data = {**self._config_entry.data, **user_input}
+            if not user_input.get(CONF_ENERGY_ENTITY):
+                new_data.pop(CONF_ENERGY_ENTITY, None)
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data
+        energy = current.get(CONF_ENERGY_ENTITY)
+        schema: dict[Any, Any] = {
+            vol.Required(
+                CONF_SWITCH_ENTITY,
+                default=current.get(CONF_SWITCH_ENTITY),
+            ): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
+            vol.Required(
+                CONF_POWER_ENTITY,
+                default=current.get(CONF_POWER_ENTITY),
+            ): selector.EntitySelector(
+                selector.EntitySelectorConfig(
+                    domain="sensor",
+                    device_class="power",
+                )
+            ),
+        }
+        energy_key = (
+            vol.Optional(CONF_ENERGY_ENTITY, default=energy)
+            if energy
+            else vol.Optional(CONF_ENERGY_ENTITY)
+        )
+        schema[energy_key] = selector.EntitySelector(
+            selector.EntitySelectorConfig(
+                domain="sensor",
+                device_class="energy",
+            )
+        )
+
+        return self.async_show_form(
+            step_id="entities",
+            data_schema=vol.Schema(schema),
+        )
+
     async def async_step_thresholds(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:

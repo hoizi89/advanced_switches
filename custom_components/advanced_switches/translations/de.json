@@ -77,11 +77,21 @@
         "title": "Einstellungen",
         "description": "Wählen Sie einen Bereich zum Bearbeiten.",
         "menu_options": {
+          "entities": "Quell-Entitäten",
           "thresholds": "Schwellwerte",
           "timing": "Timing / Verzögerungen",
           "control": "Steuerung",
           "auto_off": "Auto-Abschaltung",
           "reset": "Zähler zurücksetzen"
+        }
+      },
+      "entities": {
+        "title": "Quell-Entitäten",
+        "description": "Diesen Schalter auf andere Entitäten zeigen lassen, etwa nachdem das Gerät umbenannt oder neu eingebunden wurde.",
+        "data": {
+          "switch_entity": "Schalter",
+          "power_entity": "Leistungssensor",
+          "energy_entity": "Energiesensor (optional)"
         }
       },
       "thresholds": {

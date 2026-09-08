@@ -75,10 +75,21 @@
         "title": "Settings",
         "description": "Select an area to edit.",
         "menu_options": {
+          "entities": "Source Entities",
           "thresholds": "Thresholds",
           "timing": "Timing / Delays",
           "control": "Control",
-          "auto_off": "Auto-Off Timer"
+          "auto_off": "Auto-Off Timer",
+          "reset": "Reset Counters"
+        }
+      },
+      "entities": {
+        "title": "Source Entities",
+        "description": "Point this switch at different entities, for example after the device was renamed or re-paired.",
+        "data": {
+          "switch_entity": "Switch",
+          "power_entity": "Power Sensor",
+          "energy_entity": "Energy Sensor (optional)"
         }
       },
       "thresholds": {
