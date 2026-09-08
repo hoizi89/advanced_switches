@@ -400,7 +400,7 @@ class AdvancedSwitchesOptionsFlow(OptionsFlow):
         """Manage the options - show menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["thresholds", "timing", "control", "auto_off", "reset"],
+            menu_options=["entities", "thresholds", "timing", "control", "auto_off", "reset"],
         )
 
     async def async_step_entities(
