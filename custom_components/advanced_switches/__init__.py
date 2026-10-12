@@ -335,7 +335,7 @@ class AdvancedSwitchController:
         """Return the device info shared by every entity of this entry.
 
         The tracker always owns its own device, keyed by the config entry, and
-        merely links to the source device via ``via_device``. Reusing the source
+        merely links to the source device via ``via_device_id``. Reusing the source
         device's identifiers instead would tie the tracker to whatever device the
         source entity happens to live on today — see _async_cleanup_stale_devices.
         """
@@ -348,7 +348,17 @@ class AdvancedSwitchController:
 
         source_identifiers = self.get_source_device_identifiers()
         if source_identifiers:
-            device_info["via_device"] = next(iter(source_identifiers))
+            if "via_device_id" in dr.DeviceInfo.__annotations__:
+                # ``via_device`` is deprecated (removed in HA 2027.8); link by device id.
+                source_device = dr.async_get(self.hass).async_get(self._source_device_id)
+                # A child device can't be a via device, link to its parent instead.
+                device_info["via_device_id"] = (
+                    getattr(source_device, "parent_device_id", None)
+                    or self._source_device_id
+                )
+            else:
+                # Older HA versions only know ``via_device``.
+                device_info["via_device"] = next(iter(source_identifiers))
 
         return device_info
 

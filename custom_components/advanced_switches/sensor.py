@@ -265,7 +265,8 @@ class LastSessionEnergySensor(BaseEntity):
     _attr_translation_key = "last_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    # Snapshot of the last session: no state class (not valid with energy anyway)
+    _attr_state_class = None
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:lightning-bolt"
 
@@ -394,7 +395,8 @@ class CurrentSessionEnergySensor(BaseEntity):
     _attr_translation_key = "current_session_energy"
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    # Resets to 0 with every session: no state class, so no bogus long-term sums
+    _attr_state_class = None
     _attr_icon = "mdi:lightning-bolt-circle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
